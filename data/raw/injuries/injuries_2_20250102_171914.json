@@ -1,0 +1,90 @@
+{
+  "collection_date": "2025-01-02 17:19:13",
+  "team_id": "2",
+  "roster_injuries": [
+    {
+      "player_name": "Jaylen Brown",
+      "injuries": [
+        {
+          "status": "Day-To-Day",
+          "date": "2025-01-01T22:56Z"
+        }
+      ]
+    },
+    {
+      "player_name": "JD Davison",
+      "injuries": [
+        {
+          "status": "Day-To-Day",
+          "date": "2025-01-02T21:19Z"
+        }
+      ]
+    },
+    {
+      "player_name": "Sam Hauser",
+      "injuries": []
+    },
+    {
+      "player_name": "Jrue Holiday",
+      "injuries": []
+    },
+    {
+      "player_name": "Al Horford",
+      "injuries": []
+    },
+    {
+      "player_name": "Luke Kornet",
+      "injuries": []
+    },
+    {
+      "player_name": "Drew Peterson",
+      "injuries": []
+    },
+    {
+      "player_name": "Kristaps Porzingis",
+      "injuries": [
+        {
+          "status": "Out",
+          "date": "2025-01-02T19:09Z"
+        }
+      ]
+    },
+    {
+      "player_name": "Payton Pritchard",
+      "injuries": []
+    },
+    {
+      "player_name": "Neemias Queta",
+      "injuries": []
+    },
+    {
+      "player_name": "Baylor Scheierman",
+      "injuries": []
+    },
+    {
+      "player_name": "Jaden Springer",
+      "injuries": []
+    },
+    {
+      "player_name": "Jayson Tatum",
+      "injuries": []
+    },
+    {
+      "player_name": "Xavier Tillman",
+      "injuries": []
+    },
+    {
+      "player_name": "Jordan Walsh",
+      "injuries": []
+    },
+    {
+      "player_name": "Anton Watson",
+      "injuries": []
+    },
+    {
+      "player_name": "Derrick White",
+      "injuries": []
+    }
+  ],
+  "scoreboard_injuries": []
+}

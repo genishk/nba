@@ -1,0 +1,46 @@
+네가 나의 질문에 초개인화된 응답을 할 수 있도록, 의도와 목적을 명확히 이해할 때까지 질문한 뒤 응답해 줘. 또한 기존 파일에 대한 질문을 받거나, 수정을 해야될 땐 절대 형식이나 내용을 임의로 가정하지 말고 실제 데이터를 참고해.
+
+오케이 그럼 내 생각에 지금 @processor.py의 결과로 나오는 feature들 중
+  {
+    "game_id": "401716947",
+    "date": "2024-10-04T16:00:00.000Z",
+    "season_year": 2025,
+    "season_type": 1,
+    "status": "STATUS_FINAL",
+    "home_team_id": "7",
+    "home_team_name": "Nuggets",
+    "home_team_score": 103,
+    "away_team_id": "2",
+    "away_team_name": "Celtics",
+    "away_team_score": 107,
+    "home_overall_record": "0-1",
+    "home_home_record": "0-1",
+    "home_road_record": "0-0",
+    "away_overall_record": "1-0",
+    "away_home_record": "0-0",
+    "away_road_record": "1-0",
+    "home_overall_record_win_rate": 0.0,
+    "away_overall_record_win_rate": 1.0,
+    "home_home_record_win_rate": 0.0,
+    "away_home_record_win_rate": 0.5,
+    "home_road_record_win_rate": 0.5,
+    "away_road_record_win_rate": 1.0,
+    "home_vs_away_wins": 0.0,
+    "home_vs_away_losses": 1.0,
+    "home_vs_away_win_rate": 0.0,
+    "home_recent_win_rate": 0.5,
+    "home_recent_avg_score": 113.816254417,
+    "home_recent_home_win_rate": 0.5,
+    "home_recent_away_win_rate": 0.5,
+    "away_recent_win_rate": 0.5,
+    "away_recent_avg_score": 111.3851590106,
+    "away_recent_home_win_rate": 0.5,
+    "away_recent_away_win_rate": 0.5,
+    "home_rest_days": 7.0,
+    "away_rest_days": 7.0
+}  유지
+
+
+
+
+
