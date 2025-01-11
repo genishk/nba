@@ -40,9 +40,9 @@ class BettingModelTrainer:
         # 승패 레이블 생성 (홈팀 기준)
         y = (df['home_team_score'] > df['away_team_score']).astype(int)
         
-        # 특 ID를 범주형으로 변환
-        home_team_dummies = pd.get_dummies(df['home_team_id'], prefix='home_team')
-        away_team_dummies = pd.get_dummies(df['away_team_id'], prefix='away_team')
+        # # 특 ID를 범주형으로 변환
+        # home_team_dummies = pd.get_dummies(df['home_team_id'], prefix='home_team')
+        # away_team_dummies = pd.get_dummies(df['away_team_id'], prefix='away_team')
         
         # 특성 선택
         features = [
@@ -81,20 +81,29 @@ class BettingModelTrainer:
         ]
         
         X = df[features]
-        
-        # One-Hot Encoded 팀 ID 추가
-        X = pd.concat([X, home_team_dummies, away_team_dummies], axis=1)
-        
         self.feature_names = X.columns.tolist()
         
         return X, y
+    
+        # X = df[features]
+    
+        # # Feature scaling 추가
+        # from sklearn.preprocessing import StandardScaler
+        # scaler = StandardScaler()
+        # X_scaled = scaler.fit_transform(X)
+        # X_scaled = pd.DataFrame(X_scaled, columns=X.columns, index=X.index)
+        
+        # self.feature_names = X_scaled.columns.tolist()
+        # return X_scaled, y
+    
+    
     
     def train(self, X: pd.DataFrame, y: pd.Series, initial_train: bool = True) -> Dict:
         """앙상블 모델 학습 및 평가"""
         warnings.filterwarnings('ignore', category=UserWarning)
         warnings.filterwarnings('ignore', message='.*best gain.*')
         
-        eval_size = int(len(X) * 0.2)
+        eval_size = int(len(X) * 0.15)
         X_eval = X[-eval_size:]
         y_eval = y[-eval_size:]
         
@@ -145,6 +154,42 @@ class BettingModelTrainer:
                 max_depth=rf_best_params['max_depth'],
                 random_state=42
             )
+            
+            # # 1. 초기 모델 생성 및 학습
+            # xgb_model = xgb.XGBClassifier(
+            #     learning_rate=xgb_best_params['learning_rate'],
+            #     n_estimators=xgb_best_params['n_estimators'],
+            #     max_depth=4,              # 트리 깊이 제한
+            #     colsample_bytree=0.8,     # 특성 샘플링
+            #     subsample=0.8,            # 데이터 샘플링
+            #     max_delta_step=1,         # 특성 영향력 제한
+            #     random_state=42
+            # )
+            # lgb_model = LGBMClassifier(
+            #     learning_rate=lgb_best_params['learning_rate'],
+            #     n_estimators=lgb_best_params['n_estimators'],
+            #     max_depth=4,
+            #     feature_fraction=0.8,      # 특성 사용 제한
+            #     min_child_samples=20,      # 과적합 방지
+            #     reg_lambda=0.1,           # L2 정규화
+            #     random_state=42,
+            #     verbose=-1
+            # )
+            # rf_model = RandomForestClassifier(
+            #     n_estimators=rf_best_params['n_estimators'],
+            #     max_depth=rf_best_params['max_depth'],
+            #     max_features='sqrt',       # 특성 선택 제한
+            #     min_samples_leaf=4,        # 리프 노드 최소 샘플 수
+            #     class_weight='balanced',   # 클래스 밸런스
+            #     random_state=42
+            # )
+            
+            
+            
+            
+            
+            
+            
             
             # 각 모델 학습
             xgb_model.fit(X[:-eval_size], y[:-eval_size], sample_weight=time_weights)
@@ -325,7 +370,7 @@ class BettingModelTrainer:
         joblib.dump(self.model, model_path)
         print(f"모델이 저장되었습니다: {model_path}")
     
-    def fine_tune(self, X: pd.DataFrame, y: pd.Series, n_recent_games: int = 100) -> None:
+    def fine_tune(self, X: pd.DataFrame, y: pd.Series, n_recent_games: int = 150) -> None:
         """최근 N경기 데이터로 모델 파인튜닝"""
         if self.model is None:
             raise ValueError("기존 학습된 모델이 없습니다.")
@@ -370,23 +415,64 @@ class BettingModelTrainer:
         }
     
     def _fine_tune_model(self, X: pd.DataFrame, y: pd.Series, model_type: str):
-        """개별 모델 파인튜닝"""
-        # 하이퍼파라미터 그리드 설정
+        # """개별 모델 파인튜닝"""
+        # # 하이퍼파라미터 그리드 설정
+        # weight_param_grid = {
+        #     'weight_start': [0.2, 0.3, 0.4],
+        #     'weight_end': [0.8, 0.9, 1.0],
+        # }
+        
+        # if model_type in ['xgboost', 'lightgbm']:
+        #     model_param_grid = {
+        #         'learning_rate': [0.01, 0.03],
+        #         'n_estimators': [100, 200]
+        #     }
+        # else:  # randomforest
+        #     model_param_grid = {
+        #         'n_estimators': [100, 200],
+        #         'max_depth': [10, 20]
+        #     }
+            
+                
         weight_param_grid = {
             'weight_start': [0.2, 0.3, 0.4],
             'weight_end': [0.8, 0.9, 1.0],
         }
         
-        if model_type in ['xgboost', 'lightgbm']:
+        if model_type == 'xgboost':
             model_param_grid = {
                 'learning_rate': [0.01, 0.03],
-                'n_estimators': [100, 200]
+                'n_estimators': [100, 200],
+                # 고정 파라미터도 리스트로 변경
+                'max_depth': [4],              # 트리 깊이 제한
+                'colsample_bytree': [0.8],     # 특성 샘플링으로 과도한 의존도 방지
+                'subsample': [0.8],            # 데이터 샘플링
+                'max_delta_step': [1]          # 특성 영향력 제한
+            }
+        elif model_type == 'lightgbm':
+            model_param_grid = {
+                'learning_rate': [0.01, 0.03],
+                'n_estimators': [100, 200],
+                # 고정 파라미터도 리스트로 변경
+                'max_depth': [4],
+                'is_unbalance': [True],
+                'feature_fraction': [0.8],      # 특성 사용 제한
+                'min_child_samples': [20],      # 과적합 방지
+                'reg_lambda': [0.1]            # L2 정규화
             }
         else:  # randomforest
             model_param_grid = {
                 'n_estimators': [100, 200],
-                'max_depth': [10, 20]
+                'max_depth': [10, 20],
+                # 고정 파라미터도 리스트로 변경
+                'max_features': ['sqrt'],       # 특성 선택 제한
+                'min_samples_leaf': [4],        # 리프 노드 최소 샘플 수
+                'class_weight': ['balanced']    # 클래스 밸런스
             }
+            
+            
+        
+        
         
         tscv = TimeSeriesSplit(n_splits=3)
         best_score = 0
@@ -622,7 +708,7 @@ if __name__ == "__main__":
     
     # 최근 100경기로 파인튜닝
     print("\n=== 파인튜닝 시작 ===")
-    trainer.fine_tune(X, y, n_recent_games=100)
+    trainer.fine_tune(X, y, n_recent_games=150)
     
     # 파인튜닝된 모델 평가
     print("\n=== 파인튜닝된 모델 평가 ===")

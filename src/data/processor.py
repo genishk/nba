@@ -217,26 +217,11 @@ class DataProcessor:
         for idx, row in df.iterrows():
             home_id = row['home_team_id']
             away_id = row['away_team_id']
-            
-            # 키 생성 (항상 작은 ID가 앞으로 오게 함)
             team_key = tuple(sorted([home_id, away_id]))
             
-            if team_key not in h2h_records:
-                h2h_records[team_key] = [0, 0]  # [첫 번째 팀 승리 수, 총 경기 수]
-            
-            # 현재 경기의 승자 확인 (점수로 판단)
-            if pd.notna(row['home_team_score']) and pd.notna(row['away_team_score']):
-                h2h_records[team_key][1] += 1  # 총 경기 수 증가
-                if int(row['home_team_score']) > int(row['away_team_score']):
-                    if home_id == team_key[0]:
-                        h2h_records[team_key][0] += 1
-                else:
-                    if away_id == team_key[0]:
-                        h2h_records[team_key][0] += 1
-            
-            # 현재 시점까지의 상대전적을 기록
-            wins = h2h_records[team_key][0]
-            total = h2h_records[team_key][1]
+            # 현재 시점까지의 상대전적을 기록 (현재 경기 제외)
+            wins = h2h_records.get(team_key, [0, 0])[0]
+            total = h2h_records.get(team_key, [0, 0])[1]
             
             if home_id == team_key[0]:
                 df.loc[idx, 'home_vs_away_wins'] = wins
@@ -246,6 +231,19 @@ class DataProcessor:
                 df.loc[idx, 'home_vs_away_wins'] = total - wins
                 df.loc[idx, 'home_vs_away_losses'] = wins
                 df.loc[idx, 'home_vs_away_win_rate'] = (total - wins) / total if total > 0 else 0.5
+            
+            # 현재 경기 결과를 기록에 추가 (다음 경기를 위해)
+            if pd.notna(row['home_team_score']) and pd.notna(row['away_team_score']):
+                if team_key not in h2h_records:
+                    h2h_records[team_key] = [0, 0]
+                
+                h2h_records[team_key][1] += 1  # 총 경기 수 증가
+                if int(row['home_team_score']) > int(row['away_team_score']):
+                    if home_id == team_key[0]:
+                        h2h_records[team_key][0] += 1
+                else:
+                    if away_id == team_key[0]:
+                        h2h_records[team_key][0] += 1
         
         return df
     
