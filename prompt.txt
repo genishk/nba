@@ -1,74 +1,30 @@
 네가 나의 질문에 초개인화된 응답을 할 수 있도록, 의도와 목적을 명확히 이해할 때까지 질문한 뒤 응답해 줘. 또한 기존 파일에 대한 질문을 받거나, 수정을 해야될 땐 절대 형식이나 내용을 임의로 가정하지 말고 실제 데이터를 참고해.
 
 
-데이터 파일 로드: processed_20250103_175318.json
-
-=== 초기 모델 학습 ===
-
-=== XGBoost 최적 파라미터 ===
-{'weight_start': 0.2, 'weight_end': 0.9, 'learning_rate': 0.03, 'n_estimators': 200}
-
-=== LightGBM 최적 파라미터 ===
-{'weight_start': 0.2, 'weight_end': 0.8, 'learning_rate': 0.03, 'n_estimators': 200}
-
-=== RandomForest 최적 파라미터 ===
-{'weight_start': 0.3, 'weight_end': 1.0, 'n_estimators': 100, 'max_depth': 20}
-
-=== 초기 모델 성능 ===
-정확도: 0.842
-ROC-AUC: 0.955
-
-=== 파인튜닝 시작 ===
-
-=== XGBoost 파인튜닝 결과 ===
-파라미터: {'weight_start': 0.2, 'weight_end': 0.8, 'cv_accuracy': 0.8133333333333334, 'late_accuracy': 0.9, 'learning_rate': 0.01, 'n_estimators': 100}
-CV 평균 정확도: 0.813
-후기 데이터 정확도: 0.900
-
-=== LightGBM 파인튜닝 결과 ===
-파라미터: {'weight_start': 0.2, 'weight_end': 1.0, 'cv_accuracy': 0.7066666666666667, 'late_accuracy': 0.9, 'learning_rate': 0.03, 'n_estimators': 200}
-CV 평균 정확도: 0.707
-후기 데이터 정확도: 0.900
-
-=== RandomForest 파인튜닝 결과 ===
-파라미터: {'weight_start': 0.2, 'weight_end': 0.8, 'cv_accuracy': 0.7200000000000001, 'late_accuracy': 0.75, 'n_estimators': 200, 'max_depth': 10}
-CV 평균 정확도: 0.720
-후기 데이터 정확도: 0.750
-
-=== 파인튜닝된 모델 평가 ===
-
-=== 모델 성능 ===
-정확도: 0.956
-ROC-AUC: 0.998
-
-=== 평가 데이터 크기 ===
-전체 데이터: 572
-평가 데이터: 114
-
-=== 교차 검증 결과 ===
-CV 평균 정확도: 0.932 (+/- 0.093)
-
-=== 분류 리포트 ===
-              precision    recall  f1-score   support
-
-           0       0.94      0.98      0.96        60
-           1       0.98      0.93      0.95        54
-
-    accuracy                           0.96       114
-   macro avg       0.96      0.95      0.96       114
-weighted avg       0.96      0.96      0.96       114
 
 
-=== 시간 기반 분석 ===
-초기 평가 데이터 정확도: 0.965
-후기 평가 데이터 정확도: 0.947
 
-=== 상위 5개 중요 특성 ===
-home_vs_away_win_rate: 0.282
-home_home_record_win_rate: 0.089
-away_road_record_win_rate: 0.043
-home_overall_record_win_rate: 0.039
-away_recent_avg_score: 0.031
-모델이 저장되었습니다: c:\Users\SeokHyun\Desktop\Coding\Auto-Bet\src\models\saved_models\betting_model_20250103_215209.joblib
+아... 내가 잘못된 걸 하나 발견햇는데 지금 그 업커밍에는 그 전체 상대전적 업뎃 안된 게 넘어오는구나.. 다른 과거지표들은 괜찮나? 전체적으로 확인 실제로 processor에서 만들어서 모델 학습할 때랑 똑같은지 확인 모델 input넣는게
 
-일단 내가 생각하기에 파인튜닝까지 모든 모델들에 진행해서 앙상블을 하니까 결과가 괜찮게 나온 거 같거든. 잘못된 재학습을 제거하니 과적합을 하는 거 같지도 않고. 혹시 이상한 부분이 없는지 파악해줄래.
+
+
+
+
+
+
+
+
+초기모델트레이닝, 파인모델트레이닝
+
+학습,평가데이터 기간 확인
+모델선정 시 평가 기준 확인
+모델학습 후 해당 부분이 작동하는건지 확인
+
+
+지금 전체가 잘 이어져있는게 맞는지 처음부터 다시 다 확인해야함. 여기서 만들어두고 사실 반영이 안되고, 혹은 서로 기간이 다르고 이런 것들이 많이 있는 것 같음 파인튜닝이랑 초기트레이닝도 형식 맞춰야 될 거 같고. 무엇보다 산출되는 모델들 초기모델 -> 파인튜닝 -> 아웃풋 이모델들이 제대로 된 파라미터들이 전달되는지
+
+주요 변경사항:
+optimize_hyperparameters 호출 시 전체 데이터 X, y 사용
+시간 가중치 생성 시 전체 데이터 길이 사용
+모델 학습 시 전체 데이터 사용
+X_eval은 이제 마지막 성능 평가와 시각화에만 사용됩니다. 이렇게 수정하면 될까요?

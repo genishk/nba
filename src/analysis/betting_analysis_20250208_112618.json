@@ -1,0 +1,231 @@
+{
+  "singles": [
+    {
+      "match": "Bulls vs Warriors",
+      "team": "Bulls",
+      "probability": 0.5995603524,
+      "odds": 3.0,
+      "amount": 80.0,
+      "potential_profit": 160.0,
+      "expected_profit": 63.89448457600002,
+      "risk_amount": 80.0
+    },
+    {
+      "match": "Suns vs Nuggets",
+      "team": "Suns",
+      "probability": 0.5980727153,
+      "odds": 2.5,
+      "amount": 80.0,
+      "potential_profit": 120.0,
+      "expected_profit": 39.61454305999998,
+      "risk_amount": 80.0
+    },
+    {
+      "match": "Knicks vs Celtics",
+      "team": "Knicks",
+      "probability": 0.5872945409,
+      "odds": 2.3,
+      "amount": 80.0,
+      "potential_profit": 103.99999999999999,
+      "expected_profit": 28.06219552559999,
+      "risk_amount": 80.0
+    },
+    {
+      "match": "Magic vs Spurs",
+      "team": "Magic",
+      "probability": 0.7906474509,
+      "odds": 1.6451612903225805,
+      "amount": 80.0,
+      "potential_profit": 51.61290322580644,
+      "expected_profit": 24.059406441032245,
+      "risk_amount": 80.0
+    },
+    {
+      "match": "Mavericks vs Rockets",
+      "team": "Rockets",
+      "probability": 0.5698355864,
+      "odds": 2.24,
+      "amount": 80.0,
+      "potential_profit": 99.20000000000002,
+      "expected_profit": 22.114537082880005,
+      "risk_amount": 80.0
+    }
+  ],
+  "parlays": [
+    {
+      "type": "2_team_parlay",
+      "matches": [
+        "Bulls vs Warriors",
+        "Suns vs Nuggets"
+      ],
+      "teams": [
+        "Bulls",
+        "Suns"
+      ],
+      "probability": 0.3585806879460929,
+      "odds": 7.5,
+      "boosted_odds": 8.15,
+      "amount": 26.666666666666668,
+      "potential_profit": 190.66666666666669,
+      "expected_profit": 51.26486951361752,
+      "risk_amount": 26.666666666666668
+    },
+    {
+      "type": "2_team_parlay",
+      "matches": [
+        "Magic vs Spurs",
+        "Knicks vs Celtics"
+      ],
+      "teams": [
+        "Magic",
+        "Knicks"
+      ],
+      "probability": 0.4643429316900708,
+      "odds": 3.783870967741935,
+      "boosted_odds": 4.062258064516129,
+      "amount": 26.666666666666668,
+      "potential_profit": 81.66021505376345,
+      "expected_profit": 23.634155172241393,
+      "risk_amount": 26.666666666666668
+    },
+    {
+      "type": "2_team_parlay",
+      "matches": [
+        "Mavericks vs Rockets",
+        "Lakers vs Pacers"
+      ],
+      "teams": [
+        "Rockets",
+        "Lakers"
+      ],
+      "probability": 0.29546396981331186,
+      "odds": 5.420800000000001,
+      "boosted_odds": 5.862880000000001,
+      "amount": 26.666666666666668,
+      "potential_profit": 129.67680000000004,
+      "expected_profit": 19.527194649041874,
+      "risk_amount": 26.666666666666668
+    },
+    {
+      "type": "2_team_parlay",
+      "matches": [
+        "Wizards vs Hawks",
+        "Grizzlies vs Thunder"
+      ],
+      "teams": [
+        "Hawks",
+        "Grizzlies"
+      ],
+      "probability": 0.45316037913779067,
+      "odds": 3.0130434782608697,
+      "boosted_odds": 3.2143478260869567,
+      "amount": 26.666666666666668,
+      "potential_profit": 59.049275362318845,
+      "expected_profit": 12.176402121341296,
+      "risk_amount": 26.666666666666668
+    },
+    {
+      "type": "3_team_parlay",
+      "matches": [
+        "Bulls vs Warriors",
+        "Knicks vs Celtics",
+        "Suns vs Nuggets"
+      ],
+      "teams": [
+        "Bulls",
+        "Knicks",
+        "Suns"
+      ],
+      "probability": 0.21059248050290677,
+      "odds": 17.25,
+      "boosted_odds": 20.5,
+      "amount": 26.666666666666668,
+      "potential_profit": 520.0,
+      "expected_profit": 88.45722267492238,
+      "risk_amount": 26.666666666666668
+    },
+    {
+      "type": "3_team_parlay",
+      "matches": [
+        "Mavericks vs Rockets",
+        "Magic vs Spurs",
+        "Bulls vs Warriors"
+      ],
+      "teams": [
+        "Rockets",
+        "Magic",
+        "Bulls"
+      ],
+      "probability": 0.27012535387784214,
+      "odds": 11.055483870967741,
+      "boosted_odds": 13.06658064516129,
+      "amount": 26.666666666666668,
+      "potential_profit": 321.7754838709677,
+      "expected_profit": 67.45639255326816,
+      "risk_amount": 26.666666666666668
+    },
+    {
+      "type": "3_team_parlay",
+      "matches": [
+        "Lakers vs Pacers",
+        "Bulls vs Warriors",
+        "Grizzlies vs Thunder"
+      ],
+      "teams": [
+        "Lakers",
+        "Bulls",
+        "Grizzlies"
+      ],
+      "probability": 0.17842290644251907,
+      "odds": 15.246,
+      "boosted_odds": 18.0952,
+      "amount": 26.666666666666668,
+      "potential_profit": 455.87199999999996,
+      "expected_profit": 59.42928471089789,
+      "risk_amount": 26.666666666666668
+    },
+    {
+      "type": "3_team_parlay",
+      "matches": [
+        "Lakers vs Pacers",
+        "Magic vs Spurs",
+        "Suns vs Nuggets"
+      ],
+      "teams": [
+        "Lakers",
+        "Magic",
+        "Suns"
+      ],
+      "probability": 0.2451838306847716,
+      "odds": 9.953225806451613,
+      "boosted_odds": 11.743870967741936,
+      "amount": 26.666666666666668,
+      "potential_profit": 286.5032258064516,
+      "expected_profit": 50.117527225030486,
+      "risk_amount": 26.666666666666668
+    },
+    {
+      "type": "3_team_parlay",
+      "matches": [
+        "Mavericks vs Rockets",
+        "Grizzlies vs Thunder",
+        "Suns vs Nuggets"
+      ],
+      "teams": [
+        "Rockets",
+        "Grizzlies",
+        "Suns"
+      ],
+      "probability": 0.19559885121624143,
+      "odds": 11.760000000000002,
+      "boosted_odds": 13.912,
+      "amount": 26.666666666666668,
+      "potential_profit": 344.32000000000005,
+      "expected_profit": 45.897899149876025,
+      "risk_amount": 26.666666666666668
+    }
+  ],
+  "total_investment": 640.0,
+  "expected_profit": 595.7061144557492,
+  "max_loss": 640.0
+}

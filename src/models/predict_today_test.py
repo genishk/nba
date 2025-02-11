@@ -22,9 +22,10 @@ historical_data['games'] = [game for game in historical_data['games']
                           if game['status'] == 'STATUS_FINAL']
 
 # 1-2. 예정된 경기 데이터 수집
-upcoming_data = collector.collect_upcoming_data(days_ahead=1)
-# upcoming_data = processor.load_latest_data('upcoming')
-# STATUS_SCHEDULED인 경기만 필터링
+# upcoming_data = collector.collect_upcoming_data(days_ahead=1)
+upcoming_data = processor.load_latest_data('upcoming')
+
+#STATUS_SCHEDULED인 경기만 필터링
 upcoming_data['games'] = [game for game in upcoming_data['games'] 
                          if game['status'] == 'STATUS_SCHEDULED']
 
@@ -452,7 +453,11 @@ final_features = final_features.merge(
 # 매칭되지 않는 경우 기본값 설정
 final_features['home_vs_away_wins'] = final_features['home_vs_away_wins'].fillna(0.0)
 final_features['home_vs_away_losses'] = final_features['home_vs_away_losses'].fillna(0.0)
-final_features['home_vs_away_win_rate'] = final_features['home_vs_away_win_rate'].fillna(0.5)
+
+# wins와 losses가 모두 0인 경우(맞붙은 적이 없는 경우) win_rate를 0.5로 설정
+final_features.loc[(final_features['home_vs_away_wins'] == 0) & 
+                  (final_features['home_vs_away_losses'] == 0), 
+                  'home_vs_away_win_rate'] = 0.5
 
 
 # final_features와 updated_home_records 병합

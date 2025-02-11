@@ -1,0 +1,77 @@
+{
+  "singles": [
+    {
+      "match": "Pistons vs 76ers",
+      "team": "Pistons",
+      "probability": 0.7578351792,
+      "odds": 2.42,
+      "amount": 80.0,
+      "potential_profit": 113.6,
+      "expected_profit": 66.71689069311999,
+      "risk_amount": 80.0
+    },
+    {
+      "match": "Nets vs Heat",
+      "team": "Heat",
+      "probability": 0.7919616344,
+      "odds": 1.4587155963302751,
+      "amount": 80.0,
+      "potential_profit": 36.69724770642201,
+      "expected_profit": 12.41974302355963,
+      "risk_amount": 80.0
+    },
+    {
+      "match": "Hornets vs Spurs",
+      "team": "Spurs",
+      "probability": 0.8134765098,
+      "odds": 1.2439024390243902,
+      "amount": 19.492079991999947,
+      "potential_profit": 4.754165851707304,
+      "expected_profit": 0.23167145269178357,
+      "risk_amount": 19.492079991999947
+    }
+  ],
+  "parlays": [
+    {
+      "type": "2_team_parlay",
+      "matches": [
+        "Nets vs Heat",
+        "Pistons vs 76ers"
+      ],
+      "teams": [
+        "Heat",
+        "Pistons"
+      ],
+      "probability": 0.6001763871250488,
+      "odds": 3.5300917431192658,
+      "boosted_odds": 3.7831009174311925,
+      "amount": 120.0,
+      "potential_profit": 333.9721100917431,
+      "expected_profit": 152.46334089039732,
+      "risk_amount": 120.0
+    },
+    {
+      "type": "3_team_parlay",
+      "matches": [
+        "Hornets vs Spurs",
+        "Nets vs Heat",
+        "Pistons vs 76ers"
+      ],
+      "teams": [
+        "Spurs",
+        "Heat",
+        "Pistons"
+      ],
+      "probability": 0.4882293926628584,
+      "odds": 4.391089729245916,
+      "boosted_odds": 5.069307675095099,
+      "amount": 120.0,
+      "potential_profit": 488.3169210114119,
+      "expected_profit": 176.99820089194165,
+      "risk_amount": 120.0
+    }
+  ],
+  "total_investment": 419.49207999199996,
+  "expected_profit": 408.82984695171035,
+  "max_loss": 419.49207999199996
+}

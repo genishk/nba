@@ -1,0 +1,77 @@
+{
+  "singles": [
+    {
+      "match": "Pacers vs Knicks",
+      "team": "Pacers",
+      "probability": 0.7203020794,
+      "odds": 2.1399999999999997,
+      "amount": 80.0,
+      "potential_profit": 91.19999999999997,
+      "expected_profit": 43.31571599327998,
+      "risk_amount": 80.0
+    },
+    {
+      "match": "Bulls vs Pistons",
+      "team": "Pistons",
+      "probability": 0.746276348,
+      "odds": 1.5208333333333335,
+      "amount": 80.0,
+      "potential_profit": 41.66666666666668,
+      "expected_profit": 10.796955673333336,
+      "risk_amount": 80.0
+    },
+    {
+      "match": "Suns vs Grizzlies",
+      "team": "Grizzlies",
+      "probability": 0.7009321498000001,
+      "odds": 1.5714285714285714,
+      "amount": 71.02536478000006,
+      "potential_profit": 40.5859227314286,
+      "expected_profit": 7.206574917331533,
+      "risk_amount": 71.02536478000006
+    }
+  ],
+  "parlays": [
+    {
+      "type": "2_team_parlay",
+      "matches": [
+        "Pacers vs Knicks",
+        "Bulls vs Pistons"
+      ],
+      "teams": [
+        "Pacers",
+        "Pistons"
+      ],
+      "probability": 0.537544405271438,
+      "odds": 3.254583333333333,
+      "boosted_odds": 3.4800416666666667,
+      "amount": 120.0,
+      "potential_profit": 297.605,
+      "expected_profit": 104.48123136337888,
+      "risk_amount": 120.0
+    },
+    {
+      "type": "3_team_parlay",
+      "matches": [
+        "Pacers vs Knicks",
+        "Bulls vs Pistons",
+        "Suns vs Grizzlies"
+      ],
+      "teams": [
+        "Pacers",
+        "Pistons",
+        "Grizzlies"
+      ],
+      "probability": 0.3767821555998715,
+      "odds": 5.114345238095238,
+      "boosted_odds": 5.937214285714285,
+      "amount": 120.0,
+      "potential_profit": 592.4657142857142,
+      "expected_profit": 148.44436761957354,
+      "risk_amount": 120.0
+    }
+  ],
+  "total_investment": 471.0253647800001,
+  "expected_profit": 314.24484556689725,
+  "max_loss": 471.0253647800001
+}

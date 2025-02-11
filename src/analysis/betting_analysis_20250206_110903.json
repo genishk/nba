@@ -1,0 +1,18 @@
+{
+  "singles": [
+    {
+      "match": "Trail Blazers vs Kings",
+      "team": "Trail Blazers",
+      "probability": 0.6898280472,
+      "odds": 1.847457627118644,
+      "amount": 80.0,
+      "potential_profit": 67.79661016949152,
+      "expected_profit": 21.954246975999997,
+      "risk_amount": 80.0
+    }
+  ],
+  "parlays": [],
+  "total_investment": 80.0,
+  "expected_profit": 21.954246975999997,
+  "max_loss": 80.0
+}

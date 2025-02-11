@@ -144,6 +144,8 @@ class BettingModelTrainer:
             xgb_model = xgb.XGBClassifier(
                 learning_rate=xgb_best_params['learning_rate'],
                 n_estimators=xgb_best_params['n_estimators'],
+                reg_lambda=xgb_best_params['reg_lambda'],
+                reg_alpha=xgb_best_params['reg_alpha'],
                 random_state=42
             )
             
@@ -164,8 +166,14 @@ class BettingModelTrainer:
                 max_iter=nn_best_params['max_iter'],
                 alpha=nn_best_params['alpha'],
                 activation=nn_best_params['activation'],
-                random_state=42
+                batch_size=nn_best_params['batch_size'],
+                early_stopping=nn_best_params['early_stopping'],
+                n_iter_no_change=nn_best_params['n_iter_no_change'],
+                solver=nn_best_params['solver'],
+                random_state=42,
+                shuffle=True
             )
+            
             
             # # 1. 초기 모델 생성 및 학습
             # xgb_model = xgb.XGBClassifier(
@@ -364,8 +372,12 @@ class BettingModelTrainer:
         # 각각의 특성 중요도를 0-1 사이로 정규화
         xgb_importance = xgb_importance / np.sum(xgb_importance)
         cat_importance = cat_importance / np.sum(cat_importance)
-        nn_importance = nn_importance / np.sum(np.abs(nn_importance))  # 절대값 사용
-        
+        sum_importance = np.sum(np.abs(nn_importance))
+        if sum_importance == 0:
+            nn_importance = np.ones_like(nn_importance) / len(nn_importance)  # 모든 특성에 동일한 중요도 부여
+        else:
+            nn_importance = nn_importance / sum_importance
+                
         # 정규화된 값들의 평균 계산
         importance_values = (xgb_importance + cat_importance + nn_importance) / 3
         importance_dict = dict(zip(self.feature_names, importance_values))
@@ -447,38 +459,42 @@ class BettingModelTrainer:
             
                 
         weight_param_grid = {
-            'weight_start': [0.2, 0.3, 0.4],
-            'weight_end': [0.8, 0.9, 1.0],
+            'weight_start': [0.3, 0.5],
+            'weight_end': [0.8, 1.0],
         }
         
         if model_type == 'xgboost':
             model_param_grid = {
                 'learning_rate': [0.01, 0.03],
                 'n_estimators': [100, 200],
-                # 고정 파라미터도 리스트로 변경
-                'max_depth': [4],              # 트리 깊이 제한
-                'colsample_bytree': [0.8],     # 특성 샘플링으로 과도한 의존도 방지
-                'subsample': [0.8],            # 데이터 샘플링
-                'max_delta_step': [1]          # 특성 영향력 제한
+                'max_depth': [4, 6],
+                'subsample': [0.8],
+                'colsample_bytree': [0.8],
+                'reg_lambda': [3.0],
+                'reg_alpha': [0.3]
             }
         elif model_type == 'catboost':  # lightgbm 대신
             model_param_grid = {
-                'iterations': [100, 200],
+                'iterations': [200],
                 'learning_rate': [0.01, 0.03],
-                'depth': [4],
-                'l2_leaf_reg': [3],
+                'depth': [4, 6],
+                'l2_leaf_reg': [5],
                 'subsample': [0.8],
-                'random_strength': [1]
+                'random_strength': [2],
+                'grow_policy': ['Depthwise']
             }
-        else:  # nn 대신 (randomforest 대체)
+        else: 
             model_param_grid = {
-                'hidden_layer_sizes': [(64, 32)],
-                'learning_rate_init': [0.001, 0.01],
-                'max_iter': [200],
-                'alpha': [0.0001],
-                'activation': ['relu']
+                'hidden_layer_sizes': [(64, 32)],  # 더 깊고 넓은 네트워크
+                'learning_rate_init': [0.0001],  # 더 작은 학습률 추가
+                'max_iter': [500],  # 더 많은 반복 횟수
+                'alpha': [0.001],  # L2 정규화 강도
+                'activation': ['relu'],  # 활성화 함수 옵션 추가
+                'batch_size': [32],  # 미니배치 크기 추가
+                'early_stopping': [True],  # 조기 종료 활성화
+                'n_iter_no_change': [10], # 성능 개선 없을 때 기다리는 횟수
+                'solver': ['adam']
             }
-            
             
         
         
@@ -502,7 +518,7 @@ class BettingModelTrainer:
                     elif model_type == 'catboost':
                         model = CatBoostClassifier(**param_combo, random_state=42, verbose=False)
                     else:
-                        model = MLPClassifier(**param_combo, random_state=42)
+                        model = MLPClassifier(**param_combo, random_state=42, shuffle=True)
                     
 
                     # 후기 데이터 정확도 계산
@@ -543,15 +559,17 @@ class BettingModelTrainer:
         
         # 시간 가중치 관련 파라미터
         weight_param_grid = {
-            'weight_start': [0.2, 0.3, 0.4],
-            'weight_end': [0.8, 0.9, 1.0],
+            'weight_start': [0.4, 0.5],
+            'weight_end': [0.8, 0.9],
         }
         
         # 모델별 파라미터 그리드
         if model_type == 'xgboost':
             model_param_grid = {
                 'learning_rate': [0.01, 0.03],
-                'n_estimators': [100, 200]
+                'n_estimators': [100, 200],
+                'reg_lambda': [2.0],
+                'reg_alpha': [0.1]
             }
         elif model_type == 'catboost':  # lightgbm 대신
             model_param_grid = {
@@ -564,11 +582,15 @@ class BettingModelTrainer:
             }
         else:  # neural network (randomforest 대신)
             model_param_grid = {
-                'hidden_layer_sizes': [(64, 32)],
-                'learning_rate_init': [0.001, 0.01],
-                'max_iter': [200],
-                'alpha': [0.0001],
-                'activation': ['relu']
+                'hidden_layer_sizes': [(128, 32)],  # 더 깊고 넓은 네트워크
+                'learning_rate_init': [0.00005],  # 더 작은 학습률 추가
+                'max_iter': [500],  # 더 많은 반복 횟수
+                'alpha': [0.00001],  # L2 정규화 강도
+                'activation': ['relu'],  # 활성화 함수 옵션 추가
+                'batch_size': [32],  # 미니배치 크기 추가
+                'early_stopping': [True],  # 조기 종료 활성화
+                'n_iter_no_change': [15], # 성능 개선 없을 때 기다리는 횟수
+                'solver': ['adam']
             }
         
         tscv = TimeSeriesSplit(n_splits=3)

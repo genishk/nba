@@ -1,0 +1,231 @@
+{
+  "singles": [
+    {
+      "match": "Timberwolves vs Bulls",
+      "team": "Bulls",
+      "probability": 0.5868256028000001,
+      "odds": 5.4,
+      "amount": 80.0,
+      "potential_profit": 352.0,
+      "expected_profit": 173.50866040960003,
+      "risk_amount": 80.0
+    },
+    {
+      "match": "Pistons vs Cavaliers",
+      "team": "Pistons",
+      "probability": 0.7953734757,
+      "odds": 2.85,
+      "amount": 80.0,
+      "potential_profit": 148.0,
+      "expected_profit": 101.3451524596,
+      "risk_amount": 80.0
+    },
+    {
+      "match": "Hawks vs Spurs",
+      "team": "Hawks",
+      "probability": 0.8391698235,
+      "odds": 2.54,
+      "amount": 80.0,
+      "potential_profit": 123.2,
+      "expected_profit": 90.5193081352,
+      "risk_amount": 80.0
+    },
+    {
+      "match": "Kings vs Magic",
+      "team": "Kings",
+      "probability": 0.889980602,
+      "odds": 1.4587155963302751,
+      "amount": 80.0,
+      "potential_profit": 36.69724770642201,
+      "expected_profit": 23.85828676550458,
+      "risk_amount": 80.0
+    },
+    {
+      "match": "Nets vs Wizards",
+      "team": "Wizards",
+      "probability": 0.5646901484,
+      "odds": 2.2,
+      "amount": 80.0,
+      "potential_profit": 96.00000000000001,
+      "expected_profit": 19.385466118400004,
+      "risk_amount": 80.0
+    }
+  ],
+  "parlays": [
+    {
+      "type": "2_team_parlay",
+      "matches": [
+        "Pistons vs Cavaliers",
+        "Timberwolves vs Bulls"
+      ],
+      "teams": [
+        "Pistons",
+        "Bulls"
+      ],
+      "probability": 0.4667455193287837,
+      "odds": 15.390000000000002,
+      "boosted_odds": 16.829000000000004,
+      "amount": 26.666666666666668,
+      "potential_profit": 422.1066666666668,
+      "expected_profit": 182.79627586090942,
+      "risk_amount": 26.666666666666668
+    },
+    {
+      "type": "2_team_parlay",
+      "matches": [
+        "Hawks vs Spurs",
+        "Kings vs Magic"
+      ],
+      "teams": [
+        "Hawks",
+        "Kings"
+      ],
+      "probability": 0.7468448646987638,
+      "odds": 3.705137614678899,
+      "boosted_odds": 3.9756513761467893,
+      "amount": 26.666666666666668,
+      "potential_profit": 79.35070336391439,
+      "expected_profit": 52.511861709541414,
+      "risk_amount": 26.666666666666668
+    },
+    {
+      "type": "2_team_parlay",
+      "matches": [
+        "Nets vs Wizards",
+        "76ers vs Heat"
+      ],
+      "teams": [
+        "Wizards",
+        "Heat"
+      ],
+      "probability": 0.36556867729967074,
+      "odds": 4.033333333333334,
+      "boosted_odds": 4.336666666666668,
+      "amount": 26.666666666666668,
+      "potential_profit": 88.97777777777782,
+      "expected_profit": 15.609319925944156,
+      "risk_amount": 26.666666666666668
+    },
+    {
+      "type": "2_team_parlay",
+      "matches": [
+        "Nuggets vs Pelicans",
+        "Thunder vs Suns"
+      ],
+      "teams": [
+        "Nuggets",
+        "Thunder"
+      ],
+      "probability": 0.8372211235531474,
+      "odds": 1.3626373626373625,
+      "boosted_odds": 1.3989010989010988,
+      "amount": 26.666666666666668,
+      "potential_profit": 10.637362637362635,
+      "expected_profit": 4.565054660312279,
+      "risk_amount": 26.666666666666668
+    },
+    {
+      "type": "3_team_parlay",
+      "matches": [
+        "Pistons vs Cavaliers",
+        "Hawks vs Spurs",
+        "Timberwolves vs Bulls"
+      ],
+      "teams": [
+        "Pistons",
+        "Hawks",
+        "Bulls"
+      ],
+      "probability": 0.39167875507455135,
+      "odds": 39.09060000000001,
+      "boosted_odds": 46.70872000000001,
+      "amount": 26.666666666666668,
+      "potential_profit": 1218.8992000000003,
+      "expected_profit": 461.19502135268806,
+      "risk_amount": 26.666666666666668
+    },
+    {
+      "type": "3_team_parlay",
+      "matches": [
+        "Nets vs Wizards",
+        "Timberwolves vs Bulls",
+        "Kings vs Magic"
+      ],
+      "teams": [
+        "Wizards",
+        "Bulls",
+        "Kings"
+      ],
+      "probability": 0.2949169986845425,
+      "odds": 17.32954128440367,
+      "boosted_odds": 20.595449541284406,
+      "amount": 26.666666666666668,
+      "potential_profit": 522.5453211009175,
+      "expected_profit": 135.30528440732093,
+      "risk_amount": 26.666666666666668
+    },
+    {
+      "type": "3_team_parlay",
+      "matches": [
+        "76ers vs Heat",
+        "Timberwolves vs Bulls",
+        "Nuggets vs Pelicans"
+      ],
+      "teams": [
+        "Heat",
+        "Bulls",
+        "Nuggets"
+      ],
+      "probability": 0.3588250041184786,
+      "odds": 11.803846153846155,
+      "boosted_odds": 13.964615384615387,
+      "amount": 26.666666666666668,
+      "potential_profit": 345.723076923077,
+      "expected_profit": 106.95608461060229,
+      "risk_amount": 26.666666666666668
+    },
+    {
+      "type": "3_team_parlay",
+      "matches": [
+        "Pistons vs Cavaliers",
+        "76ers vs Heat",
+        "Kings vs Magic"
+      ],
+      "teams": [
+        "Pistons",
+        "Heat",
+        "Kings"
+      ],
+      "probability": 0.4582583753752774,
+      "odds": 7.621788990825689,
+      "boosted_odds": 8.946146788990827,
+      "amount": 26.666666666666668,
+      "potential_profit": 211.89724770642206,
+      "expected_profit": 82.65724515711176,
+      "risk_amount": 26.666666666666668
+    },
+    {
+      "type": "3_team_parlay",
+      "matches": [
+        "Pistons vs Cavaliers",
+        "Nets vs Wizards",
+        "Nuggets vs Pelicans"
+      ],
+      "teams": [
+        "Pistons",
+        "Wizards",
+        "Nuggets"
+      ],
+      "probability": 0.42422493684662377,
+      "odds": 7.475769230769231,
+      "boosted_odds": 8.770923076923076,
+      "amount": 26.666666666666668,
+      "potential_profit": 207.22461538461536,
+      "expected_profit": 72.55584769051431,
+      "risk_amount": 26.666666666666668
+    }
+  ],
+  "total_investment": 640.0,
+  "expected_profit": 1522.7688692632491,
+  "max_loss": 640.0
+}
