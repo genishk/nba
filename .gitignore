@@ -13,3 +13,19 @@ ENV/
 # Project specific
 *.log
 saved_models/
+
+# Large data files (can be regenerated via API)
+data/raw/historical/
+data/upcoming/games/
+data/alternate_spreads/
+data/historical_odds/
+data/odds/
+data/matched/
+data/merged_odds/
+data/roi_analysis/
+data/spread_matched/
+src/data/*.json
+src/predictions/*.json
+src/analysis/*.json
+catboost_info/
+src/models/catboost_info/

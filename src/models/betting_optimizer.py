@@ -12,6 +12,7 @@ class BettingOptimizer:
         self.analysis_dir = Path(__file__).parent.parent / "analysis"
         self.analysis_dir.mkdir(exist_ok=True)
         self.max_parlay_size = 3  # 최대 3팀 파라레이
+        self.min_bet_amount = 5  # 최소 베팅액 $5로 설정
         
     def load_latest_predictions(self) -> pd.DataFrame:
         """최신 앙상블 예측 결과 로드"""
@@ -56,11 +57,8 @@ class BettingOptimizer:
                 ev = self.calculate_ev(prob, odds)
                 
                 # Kelly Criterion 계산 (파라레이는 더 보수적으로)
-                if ev > 0:
-                    kelly = (prob * (odds - 1) - (1 - prob)) / (odds - 1)
-                    kelly = max(0, min(0.1, kelly))  # 파라레이는 더 낮은 상한선
-                else:
-                    kelly = 0
+                kelly = (prob * (odds - 1) - (1 - prob)) / (odds - 1)
+                kelly = max(0, min(0.1, kelly))  # 파라레이는 더 낮은 상한선
                 
                 parlays.append({
                     'type': f'{size}_team_parlay',
@@ -77,7 +75,7 @@ class BettingOptimizer:
         return parlays
     
     def optimize_portfolio(self, single_bets: pd.DataFrame, parlays: List[Dict], 
-                         bankroll: float = 1000) -> Dict:
+                         bankroll: float = 500) -> Dict:
         portfolio = {
             'singles': [],
             'parlays': [],
@@ -87,141 +85,254 @@ class BettingOptimizer:
         }
         
         # 자금 배분 (80% 사용)
-        available_bankroll = bankroll * 0.8
-        singles_allocation = available_bankroll * 0.5  # 50%로 수정
-        parlays_allocation = available_bankroll * 0.3  # 30%로 수정
+        available_bankroll = bankroll * 0.8  # $400
+        
+        # 타입별 할당 금액 설정
+        singles_allocation = available_bankroll * 0.4  # $160 (40%)
+        parlay_2team_allocation = available_bankroll * 0.3  # $120 (30%)
+        parlay_3team_allocation = available_bankroll * 0.3  # $120 (30%)
         
         # 단일 베팅 선택 및 할당
-        current_investment = 0
         good_singles = single_bets[
-            (single_bets['win_probability'] >= 0.5) &  # 50% 이상으로 수정
+            (single_bets['win_probability'] >= 0.5) &
             (single_bets['expected_value'] > 0)
         ].sort_values('expected_value', ascending=False)
         
-        # 단일 베팅 처리
-        for _, bet in good_singles.iterrows():
-            bet_amount = min(
-                singles_allocation * bet['kelly_fraction'],
-                singles_allocation - current_investment
-            )
-            if bet_amount < 1:
-                continue
+        # 1. 단일 베팅 처리
+        current_singles_investment = 0
+        valid_singles = [bet for bet in good_singles.itertuples() if bet.kelly_fraction > 0]
+        
+        if valid_singles:
+            max_single_bet = singles_allocation * 0.25  # 단일 베팅 최대액을 할당액의 25%로 제한
             
-            true_expected_profit = self.calculate_true_expected_profit(
-                bet_amount=bet_amount,
-                odds=bet['betting_odds'],
-                probability=bet['win_probability']
-            )
+            # 수정된 가중치 계산 방식
+            total_weight = sum((0.7 * bet.kelly_fraction + 0.3) * (1 + bet.expected_value) for bet in valid_singles)
             
-            portfolio['singles'].append({
-                'match': bet['match'],
-                'team': bet['team'],
-                'probability': bet['win_probability'],
-                'odds': bet['betting_odds'],
-                'amount': bet_amount,
-                'potential_profit': bet_amount * (bet['betting_odds'] - 1),
-                'expected_profit': true_expected_profit,
-                'risk_amount': bet_amount
-            })
-            current_investment += bet_amount
-        
-        # 2팀 파라레이 선택 (중복 없이, 최대 5개)
-        good_parlays_2team = []
-        used_matches_2team = set()
-        sorted_2team = sorted(
-            [p for p in parlays if p['expected_value'] > 0 and p['type'] == '2_team_parlay'],
-            key=lambda x: x['expected_value'],
-            reverse=True
-        )
-        
-        for parlay in sorted_2team:
-            matches = set(parlay['matches'])
-            if not matches & used_matches_2team:  # 겹치는 경기가 없는 경우
-                good_parlays_2team.append(parlay)
-                used_matches_2team.update(matches)
-                if len(good_parlays_2team) >= 5:  # 최대 5개로 수정
-                    break
-        
-        # 3팀 파라레이 선택 (1팀까지 중복 허용, 최대 5개)
-        good_parlays_3team = []
-        used_matches_count = {}  # 각 경기의 사용 횟수 추적
-        sorted_3team = sorted(
-            [p for p in parlays if p['expected_value'] > 0 and p['type'] == '3_team_parlay'],
-            key=lambda x: x['expected_value'],
-            reverse=True
-        )
-        
-        for parlay in sorted_3team:
-            # 현재 파라레이와 기존 선택된 파라레이들 간의 중복 경기 수 확인
-            overlap_count = 0
-            for existing_parlay in good_parlays_3team:
-                common_matches = set(parlay['matches']) & set(existing_parlay['matches'])
-                overlap_count = max(overlap_count, len(common_matches))
-            
-            # 중복 경기가 1개 이하인 경우에만 추가
-            if overlap_count <= 1:
-                good_parlays_3team.append(parlay)
-                if len(good_parlays_3team) >= 5:  # 최대 5개
-                    break
-        
-        good_parlays = good_parlays_2team + good_parlays_3team
-        
-        # 파라레이 자금 배분
-        parlay_investment = 0
-        if good_parlays:
-            per_parlay_allocation = parlays_allocation / len(good_parlays)
-            
-            for parlay in good_parlays:
-                bet_amount = min(
-                    per_parlay_allocation,
-                    parlays_allocation - parlay_investment
-                )
+            for bet in valid_singles:
+                # 더 균등한 분배를 위한 가중치 계산
+                weight = (0.7 * bet.kelly_fraction + 0.3) * (1 + bet.expected_value)
+                base_amount = (singles_allocation * weight / total_weight)
                 
-                if bet_amount < 1:
+                # 최소 및 최대 베팅액 제한 적용
+                bet_amount = max(self.min_bet_amount, min(base_amount, max_single_bet))
+                
+                # 남은 금액 초과하지 않도록 조정
+                bet_amount = min(bet_amount, singles_allocation - current_singles_investment)
+                
+                if bet_amount < self.min_bet_amount:  # 최소 베팅액 미만이면 건너뛰기
                     continue
                 
-                # 프로모션이 적용된 배당률 계산 수정
-                base_odds = parlay['odds']
-                boosted_odds = base_odds
-                if len(parlay['matches']) == 2:
-                    # 2팀 파라레이: 순수익(odds-1)에 10% 부스트
-                    boosted_odds = 1 + ((base_odds - 1) * 1.10)
-                elif len(parlay['matches']) == 3:
-                    # 3팀 파라레이: 순수익(odds-1)에 20% 부스트
-                    boosted_odds = 1 + ((base_odds - 1) * 1.20)
-                
-                # 실제 기대 수익 계산
                 true_expected_profit = self.calculate_true_expected_profit(
                     bet_amount=bet_amount,
-                    odds=parlay['odds'],
-                    probability=parlay['win_probability'],
-                    is_parlay=True,
-                    parlay_size=len(parlay['matches'])
+                    odds=bet.betting_odds,
+                    probability=bet.win_probability
                 )
                 
-                portfolio['parlays'].append({
-                    'type': parlay['type'],
-                    'matches': parlay['matches'],
-                    'teams': parlay['teams'],
-                    'probability': parlay['win_probability'],
-                    'odds': parlay['odds'],
-                    'boosted_odds': boosted_odds,
+                portfolio['singles'].append({
+                    'match': bet.match,
+                    'team': bet.team,
+                    'probability': bet.win_probability,
+                    'odds': bet.betting_odds,
                     'amount': bet_amount,
-                    'potential_profit': bet_amount * (boosted_odds - 1),
+                    'potential_profit': bet_amount * (bet.betting_odds - 1),
                     'expected_profit': true_expected_profit,
                     'risk_amount': bet_amount
                 })
-                parlay_investment += bet_amount
+                
+                current_singles_investment += bet_amount
         
-        # 포트폴리오 전체 통계
-        portfolio['total_investment'] = current_investment + parlay_investment
+        # 2. 2팀 파라레이 처리
+        current_2team_investment = 0
+        good_parlays_2team = []
+        single_bets_list = [bet for bet in good_singles.itertuples()]
+        parlays_2team = []
+        
+        # 2팀 조합 생성
+        for combo in itertools.combinations(single_bets_list, 2):
+            odds = self.calculate_parlay_odds([bet.betting_odds for bet in combo])
+            prob = self.calculate_parlay_probability([bet.win_probability for bet in combo])
+            
+            kelly = (prob * (odds - 1) - (1 - prob)) / (odds - 1)
+            kelly = max(0, min(0.1, kelly))
+            
+            boosted_odds = 1 + ((odds - 1) * 1.10)
+            expected_value = (prob * boosted_odds) - 1
+            
+            parlays_2team.append({
+                'type': '2_team_parlay',
+                'matches': [bet.match for bet in combo],
+                'teams': [bet.team for bet in combo],
+                'probability': prob,
+                'odds': odds,
+                'boosted_odds': boosted_odds,
+                'kelly_fraction': kelly,
+                'expected_value': expected_value,
+                'individual_probabilities': [bet.win_probability for bet in combo],
+                'individual_american_odds': [bet.american_odds for bet in combo]
+            })
+        
+        # 점수 기준으로 정렬
+        parlays_2team.sort(key=lambda x: (x['probability'] * 0.5 + x['expected_value'] * 0.5), reverse=True)
+        
+        # 중복 체크
+        match_count = {}
+        for parlay in parlays_2team:
+            can_add = True
+            for match, prob in zip(parlay['matches'], parlay['individual_probabilities']):
+                if match in match_count:
+                    if prob >= 0.80:
+                        if match_count[match] >= 2:
+                            can_add = False
+                            break
+                    else:
+                        if match_count[match] >= 1:
+                            can_add = False
+                            break
+            
+            if can_add:
+                good_parlays_2team.append(parlay)
+                for match in parlay['matches']:
+                    match_count[match] = match_count.get(match, 0) + 1
+        
+        # 2팀 파라레이 베팅액 계산
+        max_parlay_bet = parlay_2team_allocation * 0.3
+        total_weight = sum((0.7 * p['kelly_fraction'] + 0.3) * (1 + p['expected_value']) 
+                          for p in good_parlays_2team)
+        
+        # 2팀 파라레이 추천 조합 저장
+        recommended_2team_matches = set()
+        
+        for parlay in good_parlays_2team:
+            weight = (0.7 * parlay['kelly_fraction'] + 0.3) * (1 + parlay['expected_value'])
+            base_amount = (parlay_2team_allocation * weight / total_weight) if total_weight > 0 else self.min_bet_amount
+            bet_amount = max(self.min_bet_amount, min(base_amount, max_parlay_bet))
+            bet_amount = min(bet_amount, parlay_2team_allocation - current_2team_investment)
+            
+            if bet_amount >= self.min_bet_amount:
+                true_expected_profit = self.calculate_true_expected_profit(
+                    bet_amount=bet_amount,
+                    odds=parlay['odds'],
+                    probability=parlay['probability'],
+                    is_parlay=True,
+                    parlay_size=2
+                )
+                
+                parlay['amount'] = bet_amount
+                parlay['potential_profit'] = bet_amount * (parlay['boosted_odds'] - 1)
+                parlay['expected_profit'] = true_expected_profit
+                parlay['risk_amount'] = bet_amount
+                
+                current_2team_investment += bet_amount
+                portfolio['parlays'].append(parlay)
+                
+                # 추천된 2팀 조합 저장
+                match_pair = frozenset(parlay['matches'])
+                recommended_2team_matches.add(match_pair)
+        
+        # 3. 3팀 파라레이 처리
+        current_3team_investment = 0
+        good_parlays_3team = []
+        parlays_3team = []
+        
+        # 3팀 조합 생성
+        for combo in itertools.combinations(single_bets_list, 3):
+            # 2팀 추천 조합이 포함되어 있는지 확인
+            matches = [bet.match for bet in combo]
+            contains_recommended = False
+            
+            # 현재 3팀 조합에서 가능한 모든 2팀 조합을 확인
+            for pair in itertools.combinations(matches, 2):
+                if frozenset(pair) in recommended_2team_matches:
+                    contains_recommended = True
+                    break
+            
+            if contains_recommended:
+                continue  # 2팀 추천 조합이 포함된 경우 건너뛰기
+            
+            odds = self.calculate_parlay_odds([bet.betting_odds for bet in combo])
+            prob = self.calculate_parlay_probability([bet.win_probability for bet in combo])
+            
+            kelly = (prob * (odds - 1) - (1 - prob)) / (odds - 1)
+            kelly = max(0, min(0.1, kelly))
+            
+            boosted_odds = 1 + ((odds - 1) * 1.20)
+            expected_value = (prob * boosted_odds) - 1
+            
+            parlays_3team.append({
+                'type': '3_team_parlay',
+                'matches': matches,
+                'teams': [bet.team for bet in combo],
+                'probability': prob,
+                'odds': odds,
+                'boosted_odds': boosted_odds,
+                'kelly_fraction': kelly,
+                'expected_value': expected_value,
+                'individual_probabilities': [bet.win_probability for bet in combo],
+                'individual_american_odds': [bet.american_odds for bet in combo]
+            })
+        
+        # 점수 기준으로 정렬
+        parlays_3team.sort(key=lambda x: (x['probability'] * 0.5 + x['expected_value'] * 0.5), reverse=True)
+        
+        # 중복 체크
+        match_count = {}
+        for parlay in parlays_3team:
+            can_add = True
+            for match, prob in zip(parlay['matches'], parlay['individual_probabilities']):
+                if match in match_count:
+                    if prob >= 0.80:
+                        if match_count[match] >= 2:
+                            can_add = False
+                            break
+                    else:
+                        if match_count[match] >= 1:
+                            can_add = False
+                            break
+            
+            if can_add:
+                good_parlays_3team.append(parlay)
+                for match in parlay['matches']:
+                    match_count[match] = match_count.get(match, 0) + 1
+        
+        # 3팀 파라레이 베팅액 계산
+        max_parlay_bet = parlay_3team_allocation * 0.3
+        total_weight = sum((0.7 * p['kelly_fraction'] + 0.3) * (1 + p['expected_value']) 
+                          for p in good_parlays_3team)
+        
+        for parlay in good_parlays_3team:
+            weight = (0.7 * parlay['kelly_fraction'] + 0.3) * (1 + parlay['expected_value'])
+            base_amount = (parlay_3team_allocation * weight / total_weight) if total_weight > 0 else self.min_bet_amount
+            bet_amount = max(self.min_bet_amount, min(base_amount, max_parlay_bet))
+            bet_amount = min(bet_amount, parlay_3team_allocation - current_3team_investment)
+            
+            if bet_amount >= self.min_bet_amount:
+                true_expected_profit = self.calculate_true_expected_profit(
+                    bet_amount=bet_amount,
+                    odds=parlay['odds'],
+                    probability=parlay['probability'],
+                    is_parlay=True,
+                    parlay_size=3
+                )
+                
+                parlay['amount'] = bet_amount
+                parlay['potential_profit'] = bet_amount * (parlay['boosted_odds'] - 1)
+                parlay['expected_profit'] = true_expected_profit
+                parlay['risk_amount'] = bet_amount
+                
+                current_3team_investment += bet_amount
+                portfolio['parlays'].append(parlay)
+        
+        # 포트폴리오 전체 통계 업데이트
+        portfolio['total_investment'] = (current_singles_investment + 
+                                       current_2team_investment + 
+                                       current_3team_investment)
         portfolio['max_loss'] = portfolio['total_investment']
         portfolio['expected_profit'] = sum(bet['expected_profit'] for bet in portfolio['singles']) + \
                                      sum(bet['expected_profit'] for bet in portfolio['parlays'])
         
         return portfolio
     
-    def analyze_and_save(self, odds_data: Dict[str, str], bankroll: float = 1000) -> Dict:
+    def analyze_and_save(self, odds_data: Dict[str, str], bankroll: float = 500) -> Dict:
         # 배당률 데이터 포맷 변환
         formatted_odds = self.format_odds_data(odds_data)
         
@@ -330,7 +441,7 @@ class BettingOptimizer:
             return 1 + (100 / abs(odds))
 
     def optimize_bets(self, predictions: pd.DataFrame, odds_data: Dict[str, Dict[str, str]], 
-                     bankroll: float = 1000) -> pd.DataFrame:
+                     bankroll: float = 500) -> pd.DataFrame:
         results = []
         
         for _, game in predictions.iterrows():
@@ -368,6 +479,7 @@ class BettingOptimizer:
                 'team_side': 'home',
                 'win_probability': home_prob,
                 'betting_odds': home_odds,
+                'american_odds': odds_data[game_id]['home'],  # 미국식 배당 추가
                 'expected_value': home_ev,
                 'kelly_fraction': home_kelly
             })
@@ -380,6 +492,7 @@ class BettingOptimizer:
                 'team_side': 'away',
                 'win_probability': away_prob,
                 'betting_odds': away_odds,
+                'american_odds': odds_data[game_id]['away'],  # 미국식 배당 추가
                 'expected_value': away_ev,
                 'kelly_fraction': away_kelly
             })

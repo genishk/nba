@@ -196,7 +196,7 @@ def main():
             return
             
         try:
-            portfolio = optimizer.analyze_and_save(odds_data, bankroll=1000)
+            portfolio = optimizer.analyze_and_save(odds_data, bankroll=300)
             
             st.markdown("---")
             st.markdown("""

@@ -173,15 +173,15 @@ class BettingModel1:
         # }
         
         best_params = {
-            'colsample_bytree': 0.8,        # 더 많은 특성 사용
+            'colsample_bytree': 0.7,        # 더 많은 특성 사용
             'learning_rate': 0.05,          # 낮은 학습률로 안정적 학습
-            'max_depth': 5,                 # 적당한 깊이로 과적합 방지
-            'min_child_samples': 50,        # 안정적인 리프 노드
+            'max_depth': 4,                 # 적당한 깊이로 과적합 방지
+            'min_child_samples': 70,        # 안정적인 리프 노드
             'n_estimators': 300,            # 충분한 트리 개수
-            'num_leaves': 32,               # 적은 리프 노드로 과적합 방지
+            'num_leaves': 24,               # 적은 리프 노드로 과적합 방지
             'reg_alpha': 1.0,               # L1 규제
             'reg_lambda': 10.0,             # L2 규제
-            'subsample': 0.7,               # 데이터 샘플링으로 과적합 방지
+            'subsample': 0.65,               # 데이터 샘플링으로 과적합 방지
             'random_state': 42,
             'verbose': -1,
             'boosting_type': 'gbdt',
@@ -297,9 +297,9 @@ def get_latest_processed_data() -> List[Dict]:
     """src/data 폴더에서 가장 최신의 processed json 파일 로드 (prediction 제외)"""
     data_dir = Path(__file__).parent.parent / "data"
     
-    # prediction이 포함되지 않은 processed_ 파일만 찾기
+    # prediction, spread 제외한 processed_ 파일만 찾기 (모델 학습용 40일 데이터)
     json_files = list(data_dir.glob("processed_*.json"))
-    json_files = [f for f in json_files if 'prediction' not in f.name]
+    json_files = [f for f in json_files if 'prediction' not in f.name and 'spread' not in f.name]
     
     if not json_files:
         raise FileNotFoundError("처리된 데이터 파일을 찾을 수 없습니다.")
@@ -328,7 +328,7 @@ if __name__ == "__main__":
     metrics = model.train_model(X, y)
     
     # 최근 600경기 성능 평가
-    eval_results = model.evaluate_recent_games(X, y, n_games=50)
+    eval_results = model.evaluate_recent_games(X, y, n_games=70)
     
     # 모델 저장
     model.save_model()

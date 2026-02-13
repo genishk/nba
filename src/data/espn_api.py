@@ -202,7 +202,7 @@ class ESPNNBADataCollector:
 # 테스트 코드
 if __name__ == "__main__":
     collector = ESPNNBADataCollector()
-    data = collector.collect_historical_data(days_back=100)  # collect_game_data -> collect_historical_data
+    data = collector.collect_historical_data(days_back=155)  # collect_game_data -> collect_historical_data
     
     print("\n=== 수집된 데이터 통계 ===")
     print(f"수집된 경기 수: {len(data['games'])}")

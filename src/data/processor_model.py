@@ -325,16 +325,52 @@ class DataProcessor:
         
         return df
     
-    def save_processed_data(self, df: pd.DataFrame, prefix: str = "processed") -> Path:
+    def save_processed_data(self, df: pd.DataFrame, prefix: str = "processed", days_to_keep: Optional[int] = None) -> Path:
         """처리된 데이터를 JSON 파일로 저장
         
         Args:
             df: 처리된 DataFrame
             prefix: 파일명 접두사
+            days_to_keep: 필터링할 최근 일수 (None인 경우 전체 데이터 저장)
         
         Returns:
             저장된 파일 경로
         """
+        # 원본 DataFrame 보존
+        filtered_df = df.copy()
+        
+        # 지정된 일수만큼 최근 데이터만 필터링
+        if days_to_keep is not None:
+            print(f"\n최근 {days_to_keep}일 데이터만 필터링합니다.")
+            
+            # 현재 날짜 계산 (UTC 시간대로 설정)
+            current_date = pd.Timestamp.now(tz='UTC')
+            
+            # 필터링 기준 날짜 계산 (UTC 시간대 유지)
+            cutoff_date = current_date - pd.Timedelta(days=days_to_keep)
+            
+            # 필터링 전 레코드 수
+            before_count = len(filtered_df)
+            
+            # 데이터프레임의 date 열의 시간대 확인
+            sample_date = filtered_df['date'].iloc[0] if not filtered_df.empty else None
+            if sample_date is not None:
+                print(f"  - 데이터 날짜 타입: {type(sample_date)}, 시간대: {getattr(sample_date, 'tz', 'naive')}")
+                print(f"  - 필터링 기준 날짜: {cutoff_date}")
+            
+            # 필터링 적용
+            filtered_df = filtered_df[filtered_df['date'] >= cutoff_date]
+            
+            # 필터링 결과 출력
+            after_count = len(filtered_df)
+            print(f"  - 필터링 전: {before_count}개 레코드")
+            print(f"  - 필터링 후: {after_count}개 레코드")
+            print(f"  - 제외된 레코드: {before_count - after_count}개")
+            
+            if after_count == 0:
+                print("경고: 필터링 결과 남은 레코드가 없습니다. 전체 데이터를 저장합니다.")
+                filtered_df = df.copy()
+        
         # 현재 시간을 파일명에 포함
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"{prefix}_{timestamp}.json"
@@ -343,7 +379,7 @@ class DataProcessor:
         output_path = Path(__file__).parent / filename
         
         # DataFrame을 JSON으로 변환 (날짜/시간 처리를 위해 date_format 사용)
-        json_data = df.to_json(orient='records', date_format='iso')
+        json_data = filtered_df.to_json(orient='records', date_format='iso')
         
         # 파일 저장
         with open(output_path, 'w', encoding='utf-8') as f:
@@ -352,96 +388,9 @@ class DataProcessor:
         print(f"\n처리된 데이터 저장 완료: {output_path}")
         return output_path
         
-    # def _add_recent_trends(self, df: pd.DataFrame, data: Dict) -> pd.DataFrame:
-    #     """각 팀의 최근 5경기 승률 및 평균 점수 계산"""
-    #     print("\n=== 최근 5경기 트렌드 계산 ===")
-        
-    #     # 팀별 경기 결과 저장
-    #     team_games = defaultdict(list)
-    #     team_games_dates = defaultdict(list)
-        
-    #     # 날짜순으로 정렬된 경기들에서 결과 수집
-    #     sorted_games = sorted(data['games'], key=lambda x: x['date'])
-    #     for game in sorted_games:
-    #         if game['status'] != 'STATUS_FINAL':
-    #             continue
-                
-    #         game_date = pd.to_datetime(game['date'])
-    #         home_team_id = game['home_team']['id']
-    #         away_team_id = game['away_team']['id']
-    #         home_score = float(game['home_team']['score'])  # 문자열을 숫자로 변환
-    #         away_score = float(game['away_team']['score'])  # 문자열을 숫자로 변환
-            
-    #         # 홈팀 결과 저장
-    #         team_games[home_team_id].append({
-    #             'is_home': True,
-    #             'won': home_score > away_score,
-    #             'score': home_score
-    #         })
-    #         team_games_dates[home_team_id].append(game_date)
-            
-    #         # 원정팀 결과 저장
-    #         team_games[away_team_id].append({
-    #             'is_home': False,
-    #             'won': away_score > home_score,
-    #             'score': away_score
-    #         })
-    #         team_games_dates[away_team_id].append(game_date)
-        
-    #     # 시즌 첫 5경기 평균 계산
-    #     team_first_5_stats = defaultdict(dict)
-    #     for team_id in team_games:
-    #         first_5_games = team_games[team_id][:5]
-    #         if first_5_games:
-    #             team_first_5_stats[team_id] = {
-    #                 'win_rate': np.mean([game['won'] for game in first_5_games]),
-    #                 'avg_score': np.mean([game['score'] for game in first_5_games]),
-    #                 'home_win_rate': np.mean([game['won'] for game in first_5_games if game['is_home']]) if any(game['is_home'] for game in first_5_games) else 0.0,
-    #                 'away_win_rate': np.mean([game['won'] for game in first_5_games if not game['is_home']]) if any(not game['is_home'] for game in first_5_games) else 0.0
-    #             }
-        
-    #     # 각 경기에 대해 해당 시점까지의 최근 5경기 트렌드 계산
-    #     for idx, row in df.iterrows():
-    #         current_game_date = pd.to_datetime(row['date'])
-            
-    #         for team_type, team_id in [('home', row['home_team_id']), ('away', row['away_team_id'])]:
-    #             # 현재 경기 이전의 결과만 필터링
-    #             previous_games = [
-    #                 game for game, date in zip(
-    #                     team_games[team_id],
-    #                     team_games_dates[team_id]
-    #                 )
-    #                 if date < current_game_date
-    #             ]
-                
-    #             if len(previous_games) >= 5:
-    #                 # 최근 5경기 결과
-    #                 recent_games = previous_games[-5:]
-                    
-    #                 # 전체 승률
-    #                 df.loc[idx, f'{team_type}_recent_win_rate'] = np.mean([game['won'] for game in recent_games])
-                    
-    #                 # 평균 득점
-    #                 df.loc[idx, f'{team_type}_recent_avg_score'] = round(np.mean([game['score'] for game in recent_games]), 2)
-                    
-    #                 # 홈/원정 승률
-    #                 recent_home_games = [game for game in recent_games if game['is_home']]
-    #                 recent_away_games = [game for game in recent_games if not game['is_home']]
-                    
-    #                 df.loc[idx, f'{team_type}_recent_home_win_rate'] = np.mean([game['won'] for game in recent_home_games]) if recent_home_games else 0.0
-    #                 df.loc[idx, f'{team_type}_recent_away_win_rate'] = np.mean([game['won'] for game in recent_away_games]) if recent_away_games else 0.0
-    #             else:
-    #                 # 이전 경기가 5경기 미만인 경우 시즌 첫 5경기 평균 사용
-    #                 df.loc[idx, f'{team_type}_recent_win_rate'] = team_first_5_stats[team_id]['win_rate']
-    #                 df.loc[idx, f'{team_type}_recent_avg_score'] = team_first_5_stats[team_id]['avg_score']
-    #                 df.loc[idx, f'{team_type}_recent_home_win_rate'] = team_first_5_stats[team_id]['home_win_rate']
-    #                 df.loc[idx, f'{team_type}_recent_away_win_rate'] = team_first_5_stats[team_id]['away_win_rate']
-        
-    #     return df 
-    
     def _add_recent_trends(self, df: pd.DataFrame, data: Dict) -> pd.DataFrame:
-        """각 팀의 최근 3경기 승률 및 평균 점수 계산"""
-        print("\n=== 최근 3경기 트렌드 계산 ===")
+        """각 팀의 최근 5경기 승률 및 평균 점수 계산"""
+        print("\n=== 최근 5경기 트렌드 계산 ===")
         
         # 팀별 경기 결과 저장
         team_games = defaultdict(list)
@@ -475,19 +424,19 @@ class DataProcessor:
             })
             team_games_dates[away_team_id].append(game_date)
         
-        # 시즌 첫 3경기 평균 계산
-        team_first_3_stats = defaultdict(dict)
+        # 시즌 첫 5경기 평균 계산
+        team_first_5_stats = defaultdict(dict)
         for team_id in team_games:
-            first_3_games = team_games[team_id][:3]
-            if first_3_games:
-                team_first_3_stats[team_id] = {
-                    'win_rate': np.mean([game['won'] for game in first_3_games]),
-                    'avg_score': np.mean([game['score'] for game in first_3_games]),
-                    'home_win_rate': np.mean([game['won'] for game in first_3_games if game['is_home']]) if any(game['is_home'] for game in first_3_games) else 0.0,
-                    'away_win_rate': np.mean([game['won'] for game in first_3_games if not game['is_home']]) if any(not game['is_home'] for game in first_3_games) else 0.0
+            first_5_games = team_games[team_id][:5]
+            if first_5_games:
+                team_first_5_stats[team_id] = {
+                    'win_rate': np.mean([game['won'] for game in first_5_games]),
+                    'avg_score': np.mean([game['score'] for game in first_5_games]),
+                    'home_win_rate': np.mean([game['won'] for game in first_5_games if game['is_home']]) if any(game['is_home'] for game in first_5_games) else 0.0,
+                    'away_win_rate': np.mean([game['won'] for game in first_5_games if not game['is_home']]) if any(not game['is_home'] for game in first_5_games) else 0.0
                 }
         
-        # 각 경기에 대해 해당 시점까지의 최근 3경기 트렌드 계산
+        # 각 경기에 대해 해당 시점까지의 최근 5경기 트렌드 계산
         for idx, row in df.iterrows():
             current_game_date = pd.to_datetime(row['date'])
             
@@ -501,9 +450,9 @@ class DataProcessor:
                     if date < current_game_date
                 ]
                 
-                if len(previous_games) >= 3:
-                    # 최근 3경기 결과
-                    recent_games = previous_games[-3:]
+                if len(previous_games) >= 5:
+                    # 최근 5경기 결과
+                    recent_games = previous_games[-5:]
                     
                     # 전체 승률
                     df.loc[idx, f'{team_type}_recent_win_rate'] = np.mean([game['won'] for game in recent_games])
@@ -518,15 +467,14 @@ class DataProcessor:
                     df.loc[idx, f'{team_type}_recent_home_win_rate'] = np.mean([game['won'] for game in recent_home_games]) if recent_home_games else 0.0
                     df.loc[idx, f'{team_type}_recent_away_win_rate'] = np.mean([game['won'] for game in recent_away_games]) if recent_away_games else 0.0
                 else:
-                    # 이전 경기가 3경기 미만인 경우 시즌 첫 3경기 평균 사용
-                    df.loc[idx, f'{team_type}_recent_win_rate'] = team_first_3_stats[team_id]['win_rate']
-                    df.loc[idx, f'{team_type}_recent_avg_score'] = team_first_3_stats[team_id]['avg_score']
-                    df.loc[idx, f'{team_type}_recent_home_win_rate'] = team_first_3_stats[team_id]['home_win_rate']
-                    df.loc[idx, f'{team_type}_recent_away_win_rate'] = team_first_3_stats[team_id]['away_win_rate']
+                    # 이전 경기가 5경기 미만인 경우 시즌 첫 5경기 평균 사용
+                    df.loc[idx, f'{team_type}_recent_win_rate'] = team_first_5_stats[team_id]['win_rate']
+                    df.loc[idx, f'{team_type}_recent_avg_score'] = team_first_5_stats[team_id]['avg_score']
+                    df.loc[idx, f'{team_type}_recent_home_win_rate'] = team_first_5_stats[team_id]['home_win_rate']
+                    df.loc[idx, f'{team_type}_recent_away_win_rate'] = team_first_5_stats[team_id]['away_win_rate']
         
-        return df 
-      
-        
+        return df
+    
     def _add_rest_days(self, df: pd.DataFrame, data: Dict) -> pd.DataFrame:
         """각 팀의 이전 경기와의 휴식일 수 계산"""
         print("\n=== 휴식일 수 정보 추가 ===")
@@ -687,5 +635,20 @@ if __name__ == "__main__":
     print("\n=== 수치형 특성 목록 ===")
     print(features_df.select_dtypes(include=['float64', 'int64', 'Int64']).columns.tolist())
     
-    # 처리된 데이터 저장
-    output_path = processor.save_processed_data(features_df)
+    # 1. 모델 학습용 데이터 저장 (40일치)
+    print("\n" + "=" * 50)
+    print("📊 모델 학습용 데이터 저장 (40일치)")
+    print("=" * 50)
+    output_path = processor.save_processed_data(features_df, prefix="processed", days_to_keep=40)
+    
+    # 2. Spread 분석용 데이터 저장 (105일치)
+    print("\n" + "=" * 50)
+    print("📊 Spread 분석용 데이터 저장 (105일치)")
+    print("=" * 50)
+    spread_output_path = processor.save_processed_data(features_df, prefix="processed_spread", days_to_keep=105)
+    
+    print("\n" + "=" * 50)
+    print("✅ 데이터 저장 완료")
+    print("=" * 50)
+    print(f"  모델용: {output_path}")
+    print(f"  Spread용: {spread_output_path}")

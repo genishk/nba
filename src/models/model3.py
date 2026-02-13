@@ -263,20 +263,20 @@ class BettingModel3:
             #     'random_state': 42
             # }
             params = {
-                'n_estimators': 500,            # 1000 -> 500으로 줄여서 과적합 방지
+                'n_estimators': 800,            # 1000 -> 500으로 줄여서 과적합 방지
                 'learning_rate': 0.03,          # 0.1 -> 0.03으로 낮춰서 더 안정적인 학습
-                'max_depth': 4,                 # 5 -> 4로 줄여서 과적합 방지
-                'min_child_weight': 5,          # 3 -> 5로 증가하여 더 안정적인 리프 노드
+                'max_depth': 3,                 # 5 -> 4로 줄여서 과적합 방지
+                'min_child_weight': 6,          # 3 -> 5로 증가하여 더 안정적인 리프 노드
                 'gamma': 1.0,                   # 0.5 -> 1.0으로 증가하여 트리 분할을 더 보수적으로
-                'subsample': 0.7,               # 0.8 -> 0.7로 줄여서 과적합 방지
-                'colsample_bytree': 0.7,        # 0.8 -> 0.7로 줄여서 특성 샘플링 강화
-                'reg_alpha': 2.0,               # 1 -> 2.0으로 L1 규제 강화
-                'reg_lambda': 3.0,              # 1 -> 3.0으로 L2 규제 강화
+                'subsample': 0.65,               # 0.8 -> 0.7로 줄여서 과적합 방지
+                'colsample_bytree': 0.65,        # 0.8 -> 0.7로 줄여서 특성 샘플링 강화
+                'reg_alpha': 2.5,               # 1 -> 2.0으로 L1 규제 강화
+                'reg_lambda': 4.0,              # 1 -> 3.0으로 L2 규제 강화
                 'scale_pos_weight': 1,          # 클래스 균형 유지
                 'objective': 'binary:logistic',
                 'eval_metric': 'auc',
                 'base_score': 0.5,              # 예측 시작점을 0.5로 설정
-                'max_delta_step': 2,            # 각 트리의 가중치 추정을 보수적으로
+                'max_delta_step': 3,            # 각 트리의 가중치 추정을 보수적으로
                 'verbosity': 0,
                 'random_state': 42
             }
@@ -387,9 +387,9 @@ def get_latest_processed_data() -> List[Dict]:
     """src/data 폴더에서 가장 최신의 processed json 파일 로드 (prediction 제외)"""
     data_dir = Path(__file__).parent.parent / "data"
     
-    # prediction이 포함되지 않은 processed_ 파일만 찾기
+    # prediction, spread 제외한 processed_ 파일만 찾기 (모델 학습용 40일 데이터)
     json_files = list(data_dir.glob("processed_*.json"))
-    json_files = [f for f in json_files if 'prediction' not in f.name]
+    json_files = [f for f in json_files if 'prediction' not in f.name and 'spread' not in f.name]
     
     if not json_files:
         raise FileNotFoundError("처리된 데이터 파일을 찾을 수 없습니다.")
@@ -420,7 +420,7 @@ if __name__ == "__main__":
     metrics = model.train_model(X, y)
     
     # 최근 50경기 성능 평가
-    eval_results = model.evaluate_recent_games(X, y, n_games=50)
+    eval_results = model.evaluate_recent_games(X, y, n_games=70)
     
     # 모델 저장
     model.save_model() 

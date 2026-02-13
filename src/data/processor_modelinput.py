@@ -339,96 +339,9 @@ class DataProcessor:
         print(f"\n처리된 데이터 저장 완료: {output_path}")
         return output_path
         
-    # def _add_recent_trends(self, df: pd.DataFrame, data: Dict) -> pd.DataFrame:
-    #     """각 팀의 최근 5경기 승률 및 평균 점수 계산"""
-    #     print("\n=== 최근 5경기 트렌드 계산 ===")
-        
-    #     # 팀별 경기 결과 저장
-    #     team_games = defaultdict(list)
-    #     team_games_dates = defaultdict(list)
-        
-    #     # 날짜순으로 정렬된 경기들에서 결과 수집
-    #     sorted_games = sorted(data['games'], key=lambda x: x['date'])
-    #     for game in sorted_games:
-    #         if game['status'] != 'STATUS_FINAL':
-    #             continue
-                
-    #         game_date = pd.to_datetime(game['date'])
-    #         home_team_id = game['home_team']['id']
-    #         away_team_id = game['away_team']['id']
-    #         home_score = float(game['home_team']['score'])  # 문자열을 숫자로 변환
-    #         away_score = float(game['away_team']['score'])  # 문자열을 숫자로 변환
-            
-    #         # 홈팀 결과 저장
-    #         team_games[home_team_id].append({
-    #             'is_home': True,
-    #             'won': home_score > away_score,
-    #             'score': home_score
-    #         })
-    #         team_games_dates[home_team_id].append(game_date)
-            
-    #         # 원정팀 결과 저장
-    #         team_games[away_team_id].append({
-    #             'is_home': False,
-    #             'won': away_score > home_score,
-    #             'score': away_score
-    #         })
-    #         team_games_dates[away_team_id].append(game_date)
-        
-    #     # 시즌 첫 5경기 평균 계산
-    #     team_first_5_stats = defaultdict(dict)
-    #     for team_id in team_games:
-    #         first_5_games = team_games[team_id][:5]
-    #         if first_5_games:
-    #             team_first_5_stats[team_id] = {
-    #                 'win_rate': np.mean([game['won'] for game in first_5_games]),
-    #                 'avg_score': np.mean([game['score'] for game in first_5_games]),
-    #                 'home_win_rate': np.mean([game['won'] for game in first_5_games if game['is_home']]) if any(game['is_home'] for game in first_5_games) else 0.0,
-    #                 'away_win_rate': np.mean([game['won'] for game in first_5_games if not game['is_home']]) if any(not game['is_home'] for game in first_5_games) else 0.0
-    #             }
-        
-    #     # 각 경기에 대해 해당 시점까지의 최근 5경기 트렌드 계산
-    #     for idx, row in df.iterrows():
-    #         current_game_date = pd.to_datetime(row['date'])
-            
-    #         for team_type, team_id in [('home', row['home_team_id']), ('away', row['away_team_id'])]:
-    #             # 현재 경기 이전의 결과만 필터링
-    #             previous_games = [
-    #                 game for game, date in zip(
-    #                     team_games[team_id],
-    #                     team_games_dates[team_id]
-    #                 )
-    #                 if date <= current_game_date
-    #             ]
-                
-    #             if len(previous_games) >= 5:
-    #                 # 최근 5경기 결과
-    #                 recent_games = previous_games[-5:]
-                    
-    #                 # 전체 승률
-    #                 df.loc[idx, f'{team_type}_recent_win_rate'] = np.mean([game['won'] for game in recent_games])
-                    
-    #                 # 평균 득점
-    #                 df.loc[idx, f'{team_type}_recent_avg_score'] = round(np.mean([game['score'] for game in recent_games]), 2)
-                    
-    #                 # 홈/원정 승률
-    #                 recent_home_games = [game for game in recent_games if game['is_home']]
-    #                 recent_away_games = [game for game in recent_games if not game['is_home']]
-                    
-    #                 df.loc[idx, f'{team_type}_recent_home_win_rate'] = np.mean([game['won'] for game in recent_home_games]) if recent_home_games else 0.0
-    #                 df.loc[idx, f'{team_type}_recent_away_win_rate'] = np.mean([game['won'] for game in recent_away_games]) if recent_away_games else 0.0
-    #             else:
-    #                 # 이전 경기가 5경기 미만인 경우 시즌 첫 5경기 평균 사용
-    #                 df.loc[idx, f'{team_type}_recent_win_rate'] = team_first_5_stats[team_id]['win_rate']
-    #                 df.loc[idx, f'{team_type}_recent_avg_score'] = team_first_5_stats[team_id]['avg_score']
-    #                 df.loc[idx, f'{team_type}_recent_home_win_rate'] = team_first_5_stats[team_id]['home_win_rate']
-    #                 df.loc[idx, f'{team_type}_recent_away_win_rate'] = team_first_5_stats[team_id]['away_win_rate']
-        
-    #     return df       
-    
     def _add_recent_trends(self, df: pd.DataFrame, data: Dict) -> pd.DataFrame:
-        """각 팀의 최근 3경기 승률 및 평균 점수 계산"""
-        print("\n=== 최근 3경기 트렌드 계산 ===")
+        """각 팀의 최근 5경기 승률 및 평균 점수 계산"""
+        print("\n=== 최근 5경기 트렌드 계산 ===")
         
         # 팀별 경기 결과 저장
         team_games = defaultdict(list)
@@ -462,19 +375,19 @@ class DataProcessor:
             })
             team_games_dates[away_team_id].append(game_date)
         
-        # 시즌 첫 3경기 평균 계산
-        team_first_3_stats = defaultdict(dict)
+        # 시즌 첫 5경기 평균 계산
+        team_first_5_stats = defaultdict(dict)
         for team_id in team_games:
-            first_3_games = team_games[team_id][:3]
-            if first_3_games:
-                team_first_3_stats[team_id] = {
-                    'win_rate': np.mean([game['won'] for game in first_3_games]),
-                    'avg_score': np.mean([game['score'] for game in first_3_games]),
-                    'home_win_rate': np.mean([game['won'] for game in first_3_games if game['is_home']]) if any(game['is_home'] for game in first_3_games) else 0.0,
-                    'away_win_rate': np.mean([game['won'] for game in first_3_games if not game['is_home']]) if any(not game['is_home'] for game in first_3_games) else 0.0
+            first_5_games = team_games[team_id][:5]
+            if first_5_games:
+                team_first_5_stats[team_id] = {
+                    'win_rate': np.mean([game['won'] for game in first_5_games]),
+                    'avg_score': np.mean([game['score'] for game in first_5_games]),
+                    'home_win_rate': np.mean([game['won'] for game in first_5_games if game['is_home']]) if any(game['is_home'] for game in first_5_games) else 0.0,
+                    'away_win_rate': np.mean([game['won'] for game in first_5_games if not game['is_home']]) if any(not game['is_home'] for game in first_5_games) else 0.0
                 }
         
-        # 각 경기에 대해 해당 시점까지의 최근 3경기 트렌드 계산
+        # 각 경기에 대해 해당 시점까지의 최근 5경기 트렌드 계산
         for idx, row in df.iterrows():
             current_game_date = pd.to_datetime(row['date'])
             
@@ -488,9 +401,9 @@ class DataProcessor:
                     if date <= current_game_date
                 ]
                 
-                if len(previous_games) >= 3:
-                    # 최근 3경기 결과
-                    recent_games = previous_games[-3:]
+                if len(previous_games) >= 5:
+                    # 최근 5경기 결과
+                    recent_games = previous_games[-5:]
                     
                     # 전체 승률
                     df.loc[idx, f'{team_type}_recent_win_rate'] = np.mean([game['won'] for game in recent_games])
@@ -505,11 +418,11 @@ class DataProcessor:
                     df.loc[idx, f'{team_type}_recent_home_win_rate'] = np.mean([game['won'] for game in recent_home_games]) if recent_home_games else 0.0
                     df.loc[idx, f'{team_type}_recent_away_win_rate'] = np.mean([game['won'] for game in recent_away_games]) if recent_away_games else 0.0
                 else:
-                    # 이전 경기가 3경기 미만인 경우 시즌 첫 3경기 평균 사용
-                    df.loc[idx, f'{team_type}_recent_win_rate'] = team_first_3_stats[team_id]['win_rate']
-                    df.loc[idx, f'{team_type}_recent_avg_score'] = team_first_3_stats[team_id]['avg_score']
-                    df.loc[idx, f'{team_type}_recent_home_win_rate'] = team_first_3_stats[team_id]['home_win_rate']
-                    df.loc[idx, f'{team_type}_recent_away_win_rate'] = team_first_3_stats[team_id]['away_win_rate']
+                    # 이전 경기가 5경기 미만인 경우 시즌 첫 5경기 평균 사용
+                    df.loc[idx, f'{team_type}_recent_win_rate'] = team_first_5_stats[team_id]['win_rate']
+                    df.loc[idx, f'{team_type}_recent_avg_score'] = team_first_5_stats[team_id]['avg_score']
+                    df.loc[idx, f'{team_type}_recent_home_win_rate'] = team_first_5_stats[team_id]['home_win_rate']
+                    df.loc[idx, f'{team_type}_recent_away_win_rate'] = team_first_5_stats[team_id]['away_win_rate']
         
         return df    
         

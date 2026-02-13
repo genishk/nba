@@ -370,7 +370,7 @@ class DataProcessor_upcoming:
                 previous_games = [g for g in games if g['date'] < game_date]
                 
                 # 최근 5경기 통계 계산
-                completed_games = [g for g in previous_games if g['score'] != 'Not played'][-10:]
+                completed_games = [g for g in previous_games if g['score'] != 'Not played'][-5:]
                 
                 if completed_games:
                     wins = 0

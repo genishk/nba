@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 import json
 import joblib
 from datetime import datetime
@@ -12,25 +12,61 @@ class EnsemblePredictor:
         self.models = []
         self.feature_names = None
         self.model_dir = Path(__file__).parent / "saved_models"
+        self.current_tag = None  # 현재 로드된 모델 태그 (active/shadow)
         
-    def load_latest_models(self) -> List[Tuple[str, str]]:
-        """각 모델의 최신 버전 로드"""
+    def load_latest_models(self, model_tag: str = 'active') -> List[Tuple[str, str]]:
+        """각 모델의 최신 버전 로드 (1~8번 모델 지원)
+        
+        Args:
+            model_tag: 모델 태그 ('active', 'shadow', 'fixed')
+                      - 'active': 현재 운영 중인 모델
+                      - 'shadow': 테스트 중인 새 모델
+                      - 'fixed': 기존 고정 모델 (하위 호환)
+        """
         loaded_models = []
+        self.current_tag = model_tag
         
-        # 각 모델 타입별로 최신 모델 로드
-        for model_num in [1, 2, 3]:
-            # 모델 파일 찾기
-            model_files = list(self.model_dir.glob(f"betting_model{model_num}_*.joblib"))
+        # 모델 타입 정보
+        model_types = {
+            1: 'lightgbm',
+            2: 'catboost', 
+            3: 'xgboost',
+            4: 'lightgbm_dart',
+            5: 'catboost_ordered',
+            6: 'xgboost_hist',
+            7: 'random_forest',
+            8: 'extra_trees'
+        }
+        
+        print(f"\n=== [{model_tag.upper()}] 모델 로드 시작 ===")
+        
+        # 각 모델 타입별로 최신 모델 로드 (1~8)
+        for model_num in range(1, 9):
+            # 모델 파일 찾기 (지정된 태그 우선, 없으면 fallback)
+            model_files = list(self.model_dir.glob(f"betting_model{model_num}_{model_tag}*.joblib"))
+            
+            # fallback: fixed -> 일반 타임스탬프 버전
+            if not model_files and model_tag != 'fixed':
+                model_files = list(self.model_dir.glob(f"betting_model{model_num}_fixed*.joblib"))
             if not model_files:
+                model_files = list(self.model_dir.glob(f"betting_model{model_num}_*.joblib"))
+            if not model_files:
+                print(f"모델{model_num} 파일을 찾을 수 없습니다. 건너뜁니다.")
                 continue
                 
             latest_model = max(model_files, key=lambda x: x.stat().st_mtime)
-            timestamp = '_'.join(latest_model.stem.split('_')[2:])
             
-            # 특성 파일 찾기
-            feature_file = self.model_dir / f"features{model_num}_{timestamp}.json"
+            # 특성 파일 찾기 (지정된 태그 우선)
+            feature_file = self.model_dir / f"features{model_num}_{model_tag}.json"
             if not feature_file.exists():
-                continue
+                # fallback: fixed -> 일반 버전
+                feature_file = self.model_dir / f"features{model_num}_fixed.json"
+            if not feature_file.exists():
+                feature_files = list(self.model_dir.glob(f"features{model_num}_*.json"))
+                if not feature_files:
+                    print(f"모델{model_num} 특성 파일을 찾을 수 없습니다. 건너뜁니다.")
+                    continue
+                feature_file = max(feature_files, key=lambda x: x.stat().st_mtime)
             
             # 모델 로드
             model = joblib.load(latest_model)
@@ -42,17 +78,19 @@ class EnsemblePredictor:
             loaded_models.append({
                 'model': model,
                 'features': feature_info['feature_names'],
-                'type': f'model{model_num}'
+                'type': f'model{model_num}',
+                'algorithm': model_types.get(model_num, 'unknown')
             })
             
-            print(f"\n=== 모델{model_num} 로드 완료 ===")
-            print(f"모델 파일: {latest_model.name}")
-            print(f"특성 파일: {feature_file.name}")
+            print(f"  모델{model_num} ({model_types.get(model_num, 'unknown')}) 로드 완료")
+            print(f"    - 모델: {latest_model.name}")
+            print(f"    - 특성: {feature_file.name}")
         
         if not loaded_models:
-            raise FileNotFoundError("로드할 수 있는 모델이 없습니다.")
+            raise FileNotFoundError(f"로드할 수 있는 [{model_tag}] 모델이 없습니다.")
         
         self.models = loaded_models
+        print(f"\n=== [{model_tag.upper()}] 총 {len(loaded_models)}개 모델 로드 완료 ===")
         return loaded_models
     
     def prepare_features(self, data: pd.DataFrame) -> pd.DataFrame:
@@ -118,27 +156,47 @@ class EnsemblePredictor:
         return X
     
     def predict_games(self, df: pd.DataFrame, weights: Dict[str, float] = None) -> pd.DataFrame:
-        """앙상블 예측 수행"""
+        """앙상블 예측 수행 (1~8번 모델 지원)"""
         X = self.prepare_features(df)
         
         if weights is None:
-            # 기본 가중치 설정 (동일 가중치)
-            weights = {f'model{i}': 1/len(self.models) for i in range(1, len(self.models)+1)}
+            # 기본 가중치 설정 (로드된 모델에 대해 동일 가중치)
+            weights = {model_info['type']: 1/len(self.models) for model_info in self.models}
         
-        # 각 모델의 예측 확률 계산
-        predictions = []
+        # 각 모델의 예측 확률 계산 및 저장
+        model_predictions = {}
+        weighted_predictions = []
+        
+        # 가중치 합계 계산 (정규화용)
+        total_weight = sum(weights.get(model_info['type'], 0) for model_info in self.models)
+        if total_weight == 0:
+            total_weight = 1  # 0으로 나누기 방지
+        
         for model_info in self.models:
             model = model_info['model']
             model_type = model_info['type']
             prob = model.predict_proba(X)[:, 1]
-            predictions.append(prob * weights[model_type])
+            
+            # 개별 모델 확률 저장 (가중치 적용 전)
+            model_predictions[model_type] = prob
+            
+            # 가중치 적용된 확률 (정규화)
+            weight = weights.get(model_type, 0)
+            if total_weight > 0:
+                weighted_predictions.append(prob * (weight / total_weight))
         
         # 가중 평균 계산
-        ensemble_probabilities = np.sum(predictions, axis=0)
+        ensemble_probabilities = np.sum(weighted_predictions, axis=0)
         
         # 결과 DataFrame 생성
         results_df = df[['date', 'home_team_name', 'away_team_name']].copy()
         results_df['home_win_probability'] = ensemble_probabilities
+        
+        # 각 모델의 개별 확률 추가 (1~8번 모델)
+        for i in range(1, 9):
+            col_name = f'model{i}_home_win_prob'
+            results_df[col_name] = model_predictions.get(f'model{i}', np.zeros(len(df)))
+        
         results_df['predicted_winner'] = np.where(
             ensemble_probabilities > 0.5,
             results_df['home_team_name'],
@@ -153,26 +211,59 @@ class EnsemblePredictor:
         # 날짜 형식 변환
         results_df['date'] = pd.to_datetime(results_df['date']).dt.strftime('%Y-%m-%d')
         
-        # 결과 출력 추가
+        # 모델 이름 매핑
+        model_names = {
+            'model1': 'LightGBM',
+            'model2': 'CatBoost',
+            'model3': 'XGBoost',
+            'model4': 'LightGBM-DART',
+            'model5': 'CatBoost-Ordered',
+            'model6': 'XGBoost-Hist',
+            'model7': 'RandomForest',
+            'model8': 'ExtraTrees'
+        }
+        
+        # 결과 출력
         print("\n=== 앙상블 예측 결과 ===")
         for _, row in results_df.iterrows():
             print(f"\n{row['date']} 경기:")
             print(f"{row['home_team_name']} vs {row['away_team_name']}")
             print(f"예상 승자: {row['predicted_winner']}")
             print(f"승리 확률: {row['win_probability']:.1%}")
+            
+            # 로드된 모델들의 확률만 출력
+            for model_info in self.models:
+                model_type = model_info['type']
+                model_name = model_names.get(model_type, model_type)
+                col_name = f'{model_type}_home_win_prob'
+                if col_name in row:
+                    print(f"  - {model_name}: {row[col_name]:.1%}")
         
         return results_df
     
-    def save_predictions(self, predictions: pd.DataFrame) -> Path:
-        """예측 결과 저장"""
+    def save_predictions(self, predictions: pd.DataFrame, model_tag: Optional[str] = None) -> Path:
+        """예측 결과 저장
+        
+        Args:
+            predictions: 예측 결과 DataFrame
+            model_tag: 저장할 태그 (None이면 현재 로드된 태그 사용)
+        """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         output_dir = Path(__file__).parent.parent / "predictions"
         output_dir.mkdir(exist_ok=True)
         
-        output_path = output_dir / f"ensemble_predictions_{timestamp}.json"
+        # 태그 결정 (파라미터 > 현재 로드된 태그 > 없음)
+        tag = model_tag or self.current_tag
+        
+        if tag:
+            output_path = output_dir / f"ensemble_predictions_{timestamp}_{tag}.json"
+        else:
+            output_path = output_dir / f"ensemble_predictions_{timestamp}.json"
+        
         predictions.to_json(output_path, orient='records', indent=2)
         
-        print(f"\n=== 앙상블 예측 결과 저장 완료 ===")
+        tag_display = f"[{tag.upper()}] " if tag else ""
+        print(f"\n=== {tag_display}앙상블 예측 결과 저장 완료 ===")
         print(f"저장 경로: {output_path}")
         
         return output_path

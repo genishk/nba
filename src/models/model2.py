@@ -264,11 +264,11 @@ class BettingModel2:
         best_params = {
             'iterations': 1500,              # 3000 -> 1500으로 줄여서 과적합 방지
             'learning_rate': 0.01,          # 0.03 -> 0.01로 더 낮춰서 안정성 확보
-            'depth': 4,                     # 6 -> 4로 줄여서 모델 복잡도 감소
-            'l2_leaf_reg': 5.0,            # 3.0 -> 5.0으로 높여서 규제 강화
+            'depth': 3,                     # 6 -> 4로 줄여서 모델 복잡도 감소
+            'l2_leaf_reg': 6.0,            # 3.0 -> 5.0으로 높여서 규제 강화
             'bootstrap_type': 'Bernoulli',
             'subsample': 0.7,              # 0.85 -> 0.7로 줄여서 과적합 방지
-            'random_strength': 1.5,        # 랜덤성 약간 증가
+            'random_strength': 2.5,        # 랜덤성 약간 증가
             'early_stopping_rounds': 50,    # 100 -> 50으로 줄여서 더 일찍 멈추게
             'task_type': 'CPU',
             'loss_function': 'Logloss',
@@ -387,9 +387,9 @@ def get_latest_processed_data() -> List[Dict]:
     """src/data 폴더에서 가장 최신의 processed json 파일 로드 (prediction 제외)"""
     data_dir = Path(__file__).parent.parent / "data"
     
-    # prediction이 포함되지 않은 processed_ 파일만 찾기
+    # prediction, spread 제외한 processed_ 파일만 찾기 (모델 학습용 40일 데이터)
     json_files = list(data_dir.glob("processed_*.json"))
-    json_files = [f for f in json_files if 'prediction' not in f.name]
+    json_files = [f for f in json_files if 'prediction' not in f.name and 'spread' not in f.name]
     
     if not json_files:
         raise FileNotFoundError("처리된 데이터 파일을 찾을 수 없습니다.")
@@ -418,7 +418,7 @@ if __name__ == "__main__":
     metrics = model.train_model(X, y)
     
     # 최근 600경기 성능 평가
-    eval_results = model.evaluate_recent_games(X, y, n_games=50)
+    eval_results = model.evaluate_recent_games(X, y, n_games=70)
     
     # 모델 저장
     model.save_model()
