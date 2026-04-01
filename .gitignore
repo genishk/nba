@@ -27,5 +27,8 @@ data/spread_matched/
 src/data/*.json
 src/predictions/*.json
 src/analysis/*.json
+src/analysis/backup_data/
+src/models/backup_models/
 catboost_info/
 src/models/catboost_info/
+temp_*.py

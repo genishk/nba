@@ -1,17 +1,17 @@
-# src/models/model6.py
-# XGBoost v2 - Histogram-based with different regularization strategy
+# src/models/model4_totals.py
+# LightGBM GBDT Regressor - Total Score Prediction (v2)
 import pandas as pd
 import numpy as np
 from pathlib import Path
 from typing import Dict, List, Tuple
 import json
 import joblib
-from sklearn.metrics import accuracy_score, roc_auc_score, confusion_matrix
-from xgboost import XGBClassifier
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from lightgbm import LGBMRegressor
 
 
-class BettingModel6:
-    """XGBoost 모델 v2 - Histogram 기반, 다른 규제 전략"""
+class BettingModel4Totals:
+    """LightGBM GBDT 회귀 모델 v2 - 총점 예측"""
     
     def __init__(self):
         self.model = None
@@ -21,7 +21,7 @@ class BettingModel6:
         self.dates = None
     
     def prepare_features(self, data: List[Dict]) -> Tuple[pd.DataFrame, pd.Series]:
-        """데이터에서 특성과 레이블 추출"""
+        """데이터에서 특성과 타겟(총점) 추출"""
         df = pd.DataFrame(data)
         
         # 날짜 기준으로 정렬
@@ -29,8 +29,8 @@ class BettingModel6:
         df = df.sort_values('date')
         self.dates = df['date']
         
-        # 승패 레이블 생성 (홈팀 기준)
-        y = (df['home_team_score'] > df['away_team_score']).astype(int)
+        # 타겟: 총점 (홈팀 + 원정팀 점수)
+        y = df['home_team_score'].astype(float) + df['away_team_score'].astype(float)
         
         # 기본 특성 선택
         base_features = [
@@ -91,42 +91,39 @@ class BettingModel6:
         return X, y
 
     def train_model(self, X: pd.DataFrame, y: pd.Series) -> Dict:
-        """Histogram 기반 XGBoost 모델 학습"""
+        """GBDT boosting 기반 LightGBM 회귀 모델 학습"""
         n_samples = len(X)
-        # 로그 증가 가중치 (완만하게 최신 데이터 강조)
-        sample_weights = np.log1p(np.linspace(1, np.e**2, n_samples))
+        # 선형 증가 가중치 (완만한 증가)
+        sample_weights = np.linspace(1, 1.5, n_samples)
         
-        # Histogram-based XGBoost with different strategy
+        # GBDT boosting - 안정적인 회귀 학습
         best_params = {
-            'tree_method': 'hist',             # Histogram 기반 트리
-            'grow_policy': 'lossguide',        # Loss-guided 트리 성장
-            'max_leaves': 32,                  # 최대 리프 수
-            'n_estimators': 600,               # 트리 개수
-            'learning_rate': 0.05,             # 중간 학습률
-            'max_depth': 0,                    # 무제한 깊이 (max_leaves로 제어)
-            'min_child_weight': 8,             # 안정적인 리프 노드
-            'gamma': 0.5,                      # 약한 트리 분할 규제
-            'subsample': 0.8,                  # 데이터 샘플링
-            'colsample_bytree': 0.75,          # 특성 샘플링
-            'colsample_bylevel': 0.8,          # 레벨별 특성 샘플링
-            'reg_alpha': 1.0,                  # L1 규제
-            'reg_lambda': 2.0,                 # L2 규제
-            'max_bin': 256,                    # Histogram 빈 수
-            'scale_pos_weight': 1,
-            'objective': 'binary:logistic',
-            'eval_metric': 'auc',
-            'verbosity': 0,
-            'random_state': 42
+            'boosting_type': 'gbdt',      # DART → GBDT로 변경 (회귀에서 더 안정적)
+            'objective': 'regression',    # 회귀용 목적 함수
+            'metric': 'mae',              # 회귀용 평가 지표
+            'colsample_bytree': 0.8,
+            'learning_rate': 0.08,
+            'max_depth': 6,
+            'min_child_samples': 50,
+            'n_estimators': 400,
+            'num_leaves': 40,
+            'reg_alpha': 0.5,
+            'reg_lambda': 5.0,
+            'subsample': 0.75,
+            'subsample_freq': 1,
+            'random_state': 42,
+            'verbose': -1,
+            'importance_type': 'gain'
         }
         
         # 모델 초기화 및 학습
-        self.model = XGBClassifier(**best_params)
+        self.model = LGBMRegressor(**best_params)
         
-        print("\n=== Model6 (XGBoost Histogram) 학습 시작 ===")
+        print("\n=== Model4 Totals (LightGBM GBDT Regressor) 학습 시작 ===")
         self.model.fit(X, y, sample_weight=sample_weights)
         
         # 특성 중요도 계산
-        importances = self.model.feature_importances_
+        importances = self.model.booster_.feature_importance(importance_type='gain')
         importances = 100.0 * (importances / importances.sum())
         
         metrics = {
@@ -139,8 +136,8 @@ class BettingModel6:
         # 상위 10개 중요 특성 출력
         print("\n=== 상위 10개 중요 특성 (%) ===")
         sorted_features = sorted(
-            metrics['feature_importance'].items(),
-            key=lambda x: x[1],
+            metrics['feature_importance'].items(), 
+            key=lambda x: x[1], 
             reverse=True
         )[:10]
         for feature, importance in sorted_features:
@@ -149,7 +146,7 @@ class BettingModel6:
         return metrics
     
     def evaluate_recent_games(self, X: pd.DataFrame, y: pd.Series, n_games: int = 50) -> Dict:
-        """학습된 모델로 최근 N경기 예측 성능 평가"""
+        """학습된 모델로 최근 N경기 예측 성능 평가 (회귀)"""
         # 최근 n_games 선택
         X_recent = X[-n_games:]
         y_recent = y[-n_games:]
@@ -157,35 +154,34 @@ class BettingModel6:
         
         # 예측 수행
         y_pred = self.model.predict(X_recent)
-        y_pred_proba = self.model.predict_proba(X_recent)[:, 1]
         
-        # 혼동 행렬 계산
-        conf_matrix = confusion_matrix(y_recent, y_pred)
+        # 회귀 평가 지표 계산
+        mae = mean_absolute_error(y_recent, y_pred)
+        rmse = np.sqrt(mean_squared_error(y_recent, y_pred))
+        r2 = r2_score(y_recent, y_pred)
         
         # 결과 저장
         results = {
-            'accuracy': accuracy_score(y_recent, y_pred),
-            'roc_auc': roc_auc_score(y_recent, y_pred_proba),
-            'confusion_matrix': conf_matrix.tolist(),
+            'mae': mae,
+            'rmse': rmse,
+            'r2': r2,
             'predictions': list(zip(
                 dates_recent.dt.strftime('%Y-%m-%d').tolist(),
                 y_recent.tolist(),
-                y_pred.tolist(),
-                y_pred_proba.tolist()
+                y_pred.tolist()
             ))
         }
         
         # 결과 출력
-        print(f"\n=== 최근 {n_games}경기 예측 성능 ===")
-        print(f"정확도: {results['accuracy']:.3f}")
-        print(f"ROC-AUC: {results['roc_auc']:.3f}")
-        print("\n혼동 행렬:")
-        print(f"TN: {conf_matrix[0,0]}, FP: {conf_matrix[0,1]}")
-        print(f"FN: {conf_matrix[1,0]}, TP: {conf_matrix[1,1]}")
+        print(f"\n=== 최근 {n_games}경기 예측 성능 (회귀) ===")
+        print(f"MAE (평균 절대 오차): {mae:.2f}점")
+        print(f"RMSE (평균 제곱근 오차): {rmse:.2f}점")
+        print(f"R² (결정 계수): {r2:.3f}")
         
         print("\n=== 최근 10경기 예측 상세 ===")
-        for date, true, pred, prob in results['predictions'][-10:]:
-            print(f"날짜: {date}, 실제: {true}, 예측: {pred}, 승리확률: {prob:.3f}")
+        for date, true, pred in results['predictions'][-10:]:
+            diff = pred - true
+            print(f"날짜: {date}, 실제: {true:.0f}점, 예측: {pred:.1f}점, 차이: {diff:+.1f}점")
         
         return results
     
@@ -199,8 +195,8 @@ class BettingModel6:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
         # 모델 파일 경로
-        model_path = self.model_dir / f"betting_model6_{timestamp}.joblib"
-        feature_path = self.model_dir / f"features6_{timestamp}.json"
+        model_path = self.model_dir / f"totals_model4_{timestamp}.joblib"
+        feature_path = self.model_dir / f"totals_features4_{timestamp}.json"
         
         # 모델 저장
         joblib.dump(self.model, model_path)
@@ -210,7 +206,8 @@ class BettingModel6:
             json.dump({
                 'feature_names': self.feature_names,
                 'model_info': {
-                    'type': 'xgboost_hist',
+                    'type': 'lightgbm_gbdt_regressor',
+                    'target': 'total_score',
                     'params': self.model.get_params()
                 }
             }, f, indent=2)
@@ -242,12 +239,14 @@ if __name__ == "__main__":
     data = get_latest_processed_data()
     
     # 모델 초기화 및 특성 준비
-    model = BettingModel6()
+    model = BettingModel4Totals()
     X, y = model.prepare_features(data)
     
     print("\n=== 데이터 준비 완료 ===")
     print(f"특성 수: {len(model.feature_names)}")
     print(f"샘플 수: {len(X)}")
+    print(f"타겟(총점) 평균: {y.mean():.1f}점")
+    print(f"타겟(총점) 범위: {y.min():.0f} ~ {y.max():.0f}점")
     
     # 전체 데이터로 모델 학습
     metrics = model.train_model(X, y)

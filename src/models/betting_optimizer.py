@@ -17,6 +17,8 @@ class BettingOptimizer:
     def load_latest_predictions(self) -> pd.DataFrame:
         """최신 앙상블 예측 결과 로드"""
         pred_files = list(self.predictions_dir.glob("ensemble_predictions_*.json"))
+        # with_odds 파일 제외 (별도 파이프라인용)
+        pred_files = [f for f in pred_files if 'with_odds' not in f.name]
         if not pred_files:
             raise FileNotFoundError("예측 결과 파일을 찾을 수 없습니다.")
         

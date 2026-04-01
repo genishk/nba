@@ -225,7 +225,7 @@ def get_latest_processed_data() -> List[Dict]:
     data_dir = Path(__file__).parent.parent / "data"
     
     json_files = list(data_dir.glob("processed_*.json"))
-    json_files = [f for f in json_files if 'prediction' not in f.name and 'spread' not in f.name]
+    json_files = [f for f in json_files if 'prediction' not in f.name and 'spread' not in f.name and 'with_odds' not in f.name]
     
     if not json_files:
         raise FileNotFoundError("처리된 데이터 파일을 찾을 수 없습니다.")

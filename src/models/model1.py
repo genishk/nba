@@ -299,7 +299,7 @@ def get_latest_processed_data() -> List[Dict]:
     
     # prediction, spread 제외한 processed_ 파일만 찾기 (모델 학습용 40일 데이터)
     json_files = list(data_dir.glob("processed_*.json"))
-    json_files = [f for f in json_files if 'prediction' not in f.name and 'spread' not in f.name]
+    json_files = [f for f in json_files if 'prediction' not in f.name and 'spread' not in f.name and 'with_odds' not in f.name]
     
     if not json_files:
         raise FileNotFoundError("처리된 데이터 파일을 찾을 수 없습니다.")

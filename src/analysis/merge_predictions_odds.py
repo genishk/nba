@@ -73,9 +73,10 @@ class PredictionsOddsMerger:
         # 태그 파일이 없으면 일반 파일로 fallback
         if not pred_files:
             pred_files = list(self.predictions_dir.glob("ensemble_predictions_*.json"))
-            # 태그가 포함된 파일 제외 (active, shadow)
+            # 태그가 포함된 파일 제외 (active, shadow, with_odds)
             pred_files = [f for f in pred_files 
-                         if not f.stem.endswith('_active') and not f.stem.endswith('_shadow')]
+                         if not f.stem.endswith('_active') and not f.stem.endswith('_shadow')
+                         and 'with_odds' not in f.name]
         
         if not pred_files:
             raise FileNotFoundError(f"예측 파일을 찾을 수 없습니다: {self.predictions_dir}")

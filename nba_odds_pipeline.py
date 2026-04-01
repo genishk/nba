@@ -166,7 +166,7 @@ def main():
     """메인 실행 함수"""
     # API 키 설정
     # API_KEY = "81fef80fc013d2c82c9a625ac1fca6b1"
-    API_KEY = "96d2a1ba46ec7b941044f395d532f8cd"
+    API_KEY = "3e76069f78f461b5348b7dfdf1ff5535"
     
     
     # 수집 기간 설정 (일) - 증분 모드에서는 무시되고 새 날짜만 수집

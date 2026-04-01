@@ -234,7 +234,7 @@ class OddsFetcher:
 
 def main():
     """테스트 실행"""
-    api_key = "96d2a1ba46ec7b941044f395d532f8cd"
+    api_key = "3e76069f78f461b5348b7dfdf1ff5535"
         
     fetcher = OddsFetcher(api_key)
     odds = fetcher.get_best_odds()

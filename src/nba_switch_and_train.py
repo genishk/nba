@@ -282,7 +282,8 @@ class NBAModelManager:
         # 1. 기존 _active.json + 태그없음 → 백업
         active_pred_files = list(self.predictions_dir.glob('ensemble_predictions_*_active.json'))
         legacy_pred_files = [f for f in self.predictions_dir.glob('ensemble_predictions_*.json')
-                            if not f.stem.endswith('_active') and not f.stem.endswith('_shadow')]
+                            if not f.stem.endswith('_active') and not f.stem.endswith('_shadow')
+                            and 'with_odds' not in f.name]
         
         backed_up_pred = 0
         for f in active_pred_files + legacy_pred_files:
@@ -305,7 +306,8 @@ class NBAModelManager:
         # 1. 기존 _active.json + 태그없음 → 백업
         active_analysis_files = list(self.analysis_dir.glob('merged_predictions_odds_*_active.json'))
         legacy_analysis_files = [f for f in self.analysis_dir.glob('merged_predictions_odds_*.json')
-                                if not f.stem.endswith('_active') and not f.stem.endswith('_shadow')]
+                                if not f.stem.endswith('_active') and not f.stem.endswith('_shadow')
+                                and 'with_odds' not in f.name]
         
         backed_up_analysis = 0
         for f in active_analysis_files + legacy_analysis_files:

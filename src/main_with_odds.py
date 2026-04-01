@@ -246,7 +246,7 @@ class NBABettingPipelineWithOdds:
             # ============================================================
             steps = [
                 # ('data/espn_api.py', 'Collecting historical NBA data'),
-                # ('data/processor_model_with_odds.py', 'Processing data with odds for training'),
+                ('data/processor_model_with_odds.py', 'Processing data with odds for training'),
                 # ('models/model1_with_odds.py', 'Training LightGBM with odds'),
                 # ('models/model2_with_odds.py', 'Training CatBoost with odds'),
                 # ('models/model3_with_odds.py', 'Training XGBoost with odds'),
@@ -255,7 +255,9 @@ class NBABettingPipelineWithOdds:
                 # ('models/model6_with_odds.py', 'Training XGBoost-Hist with odds'),
                 # ('models/model7_with_odds.py', 'Training RandomForest with odds'),
                 # ('models/model8_with_odds.py', 'Training ExtraTrees with odds'),
+                
                 # ('odds_fetcher.py', 'Fetching current NBA odds'),
+                
                 ('data/processor_modelinput_with_odds.py', 'Preparing prediction input with odds'),
                 ('predict_ensemble_with_odds.py', 'Running ensemble predictions with odds'),
                 ('analysis/merge_predictions_odds_with_odds.py', 'Merging predictions with odds data'),
